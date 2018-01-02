@@ -144,6 +144,11 @@ final class LW_Woo_GDPR {
 			define( 'LW_WOO_GDPR_ASSETS', __DIR__ . '/assets' );
 		}
 
+		// Set our front menu endpoint constant.
+		if ( ! defined( 'LW_WOO_GDPR_FRONT_VAR' ) ) {
+			define( 'LW_WOO_GDPR_FRONT_VAR', 'gdpr-actions' );
+		}
+
 		// Set our version constant.
 		if ( ! defined( 'LW_WOO_GDPR_VER' ) ) {
 			define( 'LW_WOO_GDPR_VER', $this->version );
@@ -162,6 +167,7 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/utilities.php';
 
 		// Load our various classes.
+		require_once LW_WOO_GDPR_INCLS . '/class-query-mods.php';
 
 		// Load the classes that are only accessible via admin.
 		if ( is_admin() ) {
@@ -169,6 +175,7 @@ final class LW_Woo_GDPR {
 
 		// Load the classes that are only accessible via the front end.
 		if ( ! is_admin() ) {
+			require_once LW_WOO_GDPR_INCLS . '/class-account.php';
 		}
 
 		// Load our installer and uninstaller.
