@@ -20,7 +20,7 @@ class LW_Woo_GDPR_Account {
 	public function init() {
 		add_filter( 'the_title',                                        array( $this, 'add_endpoint_title'          )           );
 		add_filter( 'woocommerce_account_menu_items',                   array( $this, 'add_endpoint_menu_item'      )           );
-		add_action( 'woocommerce_account_gdpr-actions_endpoint',        array( $this, 'add_endpoint_content'        )           );
+		add_action( 'woocommerce_account_privacy-data_endpoint',        array( $this, 'add_endpoint_content'        )           );
 	}
 
 	/**
@@ -44,7 +44,7 @@ class LW_Woo_GDPR_Account {
 		if ( isset( $wp_query->query_vars[ LW_WOO_GDPR_FRONT_VAR ] ) ) {
 
 			// New page title.
-			$title = __( 'GDPR Compliance', 'liquidweb-woocommerce-gdpr' );
+			$title = __( 'My Privacy Data', 'liquidweb-woocommerce-gdpr' );
 
 			// Remove the filter so we don't loop endlessly.
 			remove_filter( 'the_title', array( $this, 'add_endpoint_title' ) );
@@ -60,20 +60,21 @@ class LW_Woo_GDPR_Account {
 	 * @param array $items  The existing menu items.
 	 */
 	public function add_endpoint_menu_item( $items ) {
-		return wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => __( 'GDPR', 'liquidweb-woocommerce-gdpr' ) ), $items );
+		return wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => __( 'Privacy Data', 'liquidweb-woocommerce-gdpr' ) ), $items );
 	}
 
 	/**
 	 * Add the content for our endpoint to display.
 	 */
 	public function add_endpoint_content() {
+
+		// Get my current customer.
+		$customer   = new WC_Customer( get_current_user_id() );
+		// preprint( $customer, true );
 		?>
 
-		<div class="woocommerce-MyAccount-content">
+		<p>This will have the stuff for doing GDPR Compliance</p>
 
-			<p>This will have the stuff for doing GDPR</p>
-
-		</div>
 
 		<?php
 	}

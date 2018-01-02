@@ -146,7 +146,7 @@ final class LW_Woo_GDPR {
 
 		// Set our front menu endpoint constant.
 		if ( ! defined( 'LW_WOO_GDPR_FRONT_VAR' ) ) {
-			define( 'LW_WOO_GDPR_FRONT_VAR', 'gdpr-actions' );
+			define( 'LW_WOO_GDPR_FRONT_VAR', 'privacy-data' );
 		}
 
 		// Set our version constant.
@@ -167,6 +167,7 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/utilities.php';
 
 		// Load our various classes.
+		require_once LW_WOO_GDPR_INCLS . '/class-fields.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-query-mods.php';
 
 		// Load the classes that are only accessible via admin.
@@ -175,6 +176,7 @@ final class LW_Woo_GDPR {
 
 		// Load the classes that are only accessible via the front end.
 		if ( ! is_admin() ) {
+			require_once LW_WOO_GDPR_INCLS . '/class-checkout.php';
 			require_once LW_WOO_GDPR_INCLS . '/class-account.php';
 		}
 
@@ -200,7 +202,7 @@ final class LW_Woo_GDPR {
 		 *
 		 * @param string $lang_dir The languages directory path.
 		 */
-		$lang_dir = apply_filters( 'cs_message_languages_dir', $lang_dir );
+		$lang_dir = apply_filters( 'lw_woo_gdpr_languages_dir', $lang_dir );
 
 		// Traditional WordPress plugin locale filter.
 
