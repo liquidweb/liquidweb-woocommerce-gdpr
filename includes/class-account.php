@@ -47,7 +47,7 @@ class LW_Woo_GDPR_Account {
 			$title = __( 'GDPR Compliance', 'liquidweb-woocommerce-gdpr' );
 
 			// Remove the filter so we don't loop endlessly.
-			remove_filter( 'the_title', array( $this, 'endpoint_title' ) );
+			remove_filter( 'the_title', array( $this, 'add_endpoint_title' ) );
 		}
 
 		// Return the title.
