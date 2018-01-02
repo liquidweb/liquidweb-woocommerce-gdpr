@@ -37,7 +37,7 @@ class LW_Woo_GDPR_Account {
 			return $title;
 		}
 
-		// Call the global.
+		// Call the global query object.
 		global $wp_query;
 
 		// We are here, check some other stuff, then output.
