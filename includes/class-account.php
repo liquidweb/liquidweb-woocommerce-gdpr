@@ -70,8 +70,7 @@ class LW_Woo_GDPR_Account {
 
 		// Get my current customer.
 		$user_id    = get_current_user_id();
-		$customer   = new WC_Customer( $user_id );
-		// preprint( $customer, true );
+		//$customer   = new WC_Customer( $user_id );
 
 		// Get my export types.
 		$datatypes  = lw_woo_gdpr_export_types();
@@ -101,7 +100,6 @@ class LW_Woo_GDPR_Account {
 
 		// Get my fields.
 		$fields = lw_woo_gdpr_optin_fields();
-		// preprint( $fields, true );
 
 		// Bail without my fields.
 		if ( empty( $fields ) ) {
@@ -243,7 +241,6 @@ class LW_Woo_GDPR_Account {
 
 		// Check for the export files.
 		$files  = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
-		// preprint( $files, true );
 
 		// Set an empty.
 		$build  = '';
@@ -275,8 +272,8 @@ class LW_Woo_GDPR_Account {
 					}
 
 					// Make my download and delete links.
-					$download   = add_query_arg( array( 'gdpr-action' => 'download', 'data-type' => $type ), $base );
-					$delete     = add_query_arg( array( 'gdpr-action' => 'delete', 'data-type' => $type ), $base );
+					$download   = add_query_arg( array( 'data-type' => $type, 'gdpr-action' => 'download' ), $base );
+					$delete     = add_query_arg( array( 'data-type' => $type, 'gdpr-action' => 'delete' ), $base );
 
 					// Open up the span.
 					$build .= '<span class="lw-woo-gdpr-data-option lw-woo-gdpr-download-option">';
@@ -297,7 +294,6 @@ class LW_Woo_GDPR_Account {
 			} else { // Show a message saying no files exist.
 				$build .= '<p>' . esc_html__( 'You have not generated any export files.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
 			}
-
 
 		// Close the div.
 		$build .= '</div>';

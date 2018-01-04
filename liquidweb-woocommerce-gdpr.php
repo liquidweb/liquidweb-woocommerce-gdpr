@@ -260,8 +260,8 @@ final class LW_Woo_GDPR {
 		$toplevel   = $this->get_export_folder();
 
 		// Set our two base items.
-		$basedir    = $toplevel . absint( $user_id ) . '/';
-		$baseurl    = $toplevel . absint( $user_id ) . '/';
+		$basedir    = $toplevel['dir'] . absint( $user_id ) . '/';
+		$baseurl    = $toplevel['url'] . absint( $user_id ) . '/';
 
 		// Create our folder (will return if already exists).
 		wp_mkdir_p( $basedir );
@@ -340,8 +340,9 @@ final class LW_Woo_GDPR {
 				}
 
 				// Set my variables.
-				$filename   = str_replace( $user_dir, '', $userfile );
 				$filetime   = filemtime( $userfile );
+				$filename   = str_replace( $user_dir, '', $userfile );
+				$datatype   = str_replace( array( 'woo-gdpr-export-', '.csv' ), '', $filename );
 
 				// Set my expirey data.
 				$expirerate = apply_filters( 'lw_woo_gdpr_file_expire', ( WEEK_IN_SECONDS * 2 ) );
@@ -349,10 +350,10 @@ final class LW_Woo_GDPR {
 				$is_expired = absint( $expiretime ) > absint( $expirerate ) ? true : false;
 
 				// Now set up my data array.
-				$data[ $user_id ][] = array(
+				$data[ $user_id ][ $datatype ] = array(
 					'filename'  => esc_attr( $filename ),
 					'filelink'  => esc_url( $user_url . $filename ),
-					'fileroot'  => esc_attr( $userfile ),
+					'filepath'  => esc_attr( $userfile ),
 					'filetime'  => $filetime,
 					'expired'   => $is_expired,
 				);
@@ -370,53 +371,38 @@ final class LW_Woo_GDPR {
 	 */
 	public function delete_expired_files() {
 
-		// Our before action.
-		do_action( 'lw_woo_gdpr_before_expired_delete' );
-
 		// Get all my file data, bail without them.
 		if ( false === $filedata = $this->get_all_export_files() ) {
 			return;
 		}
 
+		// Our before action.
+		do_action( 'lw_woo_gdpr_before_expired_delete', $filedata );
+
 		// Now loop my file data and break it out by user.
-		foreach ( $filedata as $user_id => $files ) {
+		foreach ( $filedata as $user_id => $filegroups ) {
 
 			// Our after action.
-			do_action( 'lw_woo_gdpr_before_expired_delete_user', $user_id );
+			do_action( 'lw_woo_gdpr_before_expired_delete_user', $user_id, $filegroups );
 
 			// Skip it if we have no files.
-			if ( empty( $files ) ) {
+			if ( empty( $filegroups ) ) {
 				continue;
 			}
 
-			// Grab the existing meta.
-			$downloads  = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
-
 			// Now loop the actual files in the array.
-			foreach ( $files as $file ) {
+			foreach ( $filegroups as $datatype => $filegroup ) {
 
 				// If it isn't expired, skip it.
-				if ( empty( $file['expired'] ) ) {
+				if ( empty( $filegroup['expired'] ) ) {
 					continue;
 				}
 
-				// Now remove the actual file.
-				@unlink( $file['fileroot'] );
+				// First delete the file.
+				wp_delete_file( $filegroup['filepath'] );
 
 				// If the file is in the meta, remove it.
-				if ( ( $key = array_search( $file['fileroot'], (array) $downloads ) ) !== false ) {
-					unset( $downloads[ $key ] );
-				}
-			}
-
-			// Filter my remaining.
-			$downloads  = array_filter( $downloads );
-
-			// Either update the user meta, or delete it completely.
-			if ( ! empty( $downloads ) ) {
-				update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
-			} else {
-				delete_user_meta( $user_id, 'woo_gdpr_export_files' );
+				lw_woo_gdpr_remove_export_file( $user_id, $datatype );
 			}
 
 			// Our after action.
@@ -424,7 +410,7 @@ final class LW_Woo_GDPR {
 		}
 
 		// Our after action.
-		do_action( 'lw_woo_gdpr_after_expired_delete' );
+		do_action( 'lw_woo_gdpr_after_expired_delete', $filedata );
 
 		// Just return that we're good.
 		return true;
@@ -476,8 +462,15 @@ final class LW_Woo_GDPR {
 			return false;
 		}
 
+		// First get my folder.
+		$folder = $this->get_export_folder();
+
+		// Get the root of the file.
+		$fileroot   = str_replace( array( $folder['url'], $user_id, '/' ), '', $file_url );
+		$filepath   = $folder['dir'] . $user_id . '/' . $fileroot;
+
 		// First delete the file.
-		wp_delete_file( esc_url( $file_url ) );
+		wp_delete_file( $filepath );
 
 		// Now remove it from the existing.
 		unset( $downloads[ $datatype ] );

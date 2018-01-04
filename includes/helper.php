@@ -226,7 +226,7 @@ function lw_woo_gdpr_format_comments_export( $comments = array() ) {
 /**
  * Format the reviews to our exportable array.
  *
- * @param  array  $reviews  The array of reviews data.
+ * @param  array $reviews  The array of reviews data.
  *
  * @return array
  */
@@ -253,4 +253,42 @@ function lw_woo_gdpr_format_reviews_export( $reviews = array() ) {
 
 	// Return my export data.
 	return apply_filters( 'lw_woo_gdpr_format_reviews_export', $data, $reviews );
+}
+
+/**
+ * Remove one of the data types from the download array.
+ *
+ * @param  integer $user_id   The user ID we are looking at.
+ * @param  string  $datatype  Which of the types we want.
+ *
+ * @return void
+ */
+function lw_woo_gdpr_remove_export_file( $user_id = 0, $datatype = '' ) {
+
+	// Bail without our things.
+	if ( empty( $user_id ) || empty( $datatype ) ) {
+		return;
+	}
+
+	// Check for the export files.
+	$downloads  = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
+
+	// Return if we have none.
+	if ( empty( $downloads ) ) {
+		return;
+	}
+
+	// Remove it from the array.
+	unset( $downloads[ $datatype ] );
+
+	// Make sure it's not got empties.
+	$downloads  = array_filter( $downloads );
+
+	// Either update the user meta, or delete it completely.
+	if ( ! empty( $downloads ) ) {
+		update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
+	} else {
+		delete_user_meta( $user_id, 'woo_gdpr_export_files' );
+	}
+
 }
