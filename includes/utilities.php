@@ -50,6 +50,39 @@ if ( ! function_exists( 'preprint' ) ) {
 	// End the function exists checks.
 }
 
+if ( ! function_exists( 'lw_woo_gdpr_is_dir_empty' ) ) {
+	/**
+	 * Look inside a directory and say if it has files or not.
+	 *
+	 * @param  string $directory  The name of the directory.
+	 *
+	 * @return boolean
+	 */
+	function lw_woo_gdpr_is_dir_empty( $directory = '' ) {
+
+		// Bail if we never got a directory.
+		if ( empty( $directory ) ) {
+			return false;
+		}
+
+		// Loop my directory for fileinfo.
+		foreach ( new DirectoryIterator( $directory ) as $fileinfo ) {
+
+			// Check for the dot.
+			if ( $fileinfo->isDot() ) {
+				continue;
+			}
+
+			// We have false, since it didn't dot.
+			return false;
+		}
+
+		// Return true, it passed.
+		return true;
+	}
+	// End the function exists checks.
+}
+
 if ( ! function_exists( 'lw_woo_gdpr_check_admin_screen' ) ) {
 	/**
 	 * Do the whole 'check current screen' progressions.
