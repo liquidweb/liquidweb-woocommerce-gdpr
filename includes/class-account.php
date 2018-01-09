@@ -19,8 +19,59 @@ class LW_Woo_GDPR_Account {
 	 */
 	public function init() {
 		add_filter( 'the_title',                                        array( $this, 'add_endpoint_title'          )           );
+		add_action( 'woocommerce_before_account_navigation',            array( $this, 'add_endpoint_notices'        )           );
 		add_filter( 'woocommerce_account_menu_items',                   array( $this, 'add_endpoint_menu_item'      )           );
 		add_action( 'woocommerce_account_privacy-data_endpoint',        array( $this, 'add_endpoint_content'        )           );
+	}
+
+	/**
+	 * Add the notices above the "my account" area.
+	 *
+	 * @return HTML
+	 */
+	public function add_endpoint_notices() {
+
+		// Bail without our result flag.
+		if ( empty( $_GET['gdpr-result'] ) ) {
+			return;
+		}
+
+		// Set our base class.
+		$class  = 'lw-woo-gdpr-notice';
+		$code   = '';
+
+		// We have an error, so handle that.
+		if ( empty( $_GET['success'] ) ) {
+
+			// Add to the class.
+			$class .= ' lw-woo-gdpr-notice-error';
+
+			// Confirm our error code.
+			$code   = ! empty( $_GET['errcode'] ) ? esc_attr( $_GET['errcode'] ) : 'unknown';
+		}
+
+		// We have success, so handle that.
+		if ( ! empty( $_GET['success'] ) ) {
+
+			// Add to the class.
+			$class .= ' lw-woo-gdpr-notice-success';
+
+			// Figure out a code based on what action we took.
+			$code  = ! empty( $_GET['action'] ) && in_array( esc_attr( $_GET['action'] ), array( 'export', 'delete', 'deleteme' ) ) ? 'success-' . esc_attr( $_GET['action'] ) : 'success-general';
+		}
+
+		// Bail if we have no message text.
+		if ( empty( $code ) ) {
+			return;
+		}
+
+		// Get my text for the notice.
+		$msgtxt = lw_woo_gdpr_notice_text( $code );
+
+		// And output the actual message.
+		echo '<div class="' . esc_attr( $class ) . '">';
+			echo '<p>' . wp_kses_post( $msgtxt ) . '</p>';
+		echo '</div>';
 	}
 
 	/**
@@ -57,14 +108,37 @@ class LW_Woo_GDPR_Account {
 	/**
 	 * Merge in our new enpoint into the existing "My Account" menu.
 	 *
-	 * @param array $items  The existing menu items.
+	 * @param  array $items  The existing menu items.
+	 *
+	 * @return array
 	 */
 	public function add_endpoint_menu_item( $items ) {
-		return wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => __( 'Privacy Data', 'liquidweb-woocommerce-gdpr' ) ), $items );
+
+		// Add it to the array.
+		$items  = wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => __( 'Privacy Data', 'liquidweb-woocommerce-gdpr' ) ), $items );
+
+		// If we don't have the logout link, just tack ours on the end.
+		if ( ! isset( $items['customer-logout'] ) ) {
+			return $items;
+		}
+
+		// Set our logout link.
+		$logout = $items['customer-logout'];
+
+		// Remove the logout.
+		unset( $items['customer-logout'] );
+
+		// Now add it back in.
+		$items['customer-logout'] = $logout;
+
+		// And return the whole thing.
+		return $items;
 	}
 
 	/**
 	 * Add the content for our endpoint to display.
+	 *
+	 * @return HTML
 	 */
 	public function add_endpoint_content() {
 
@@ -86,6 +160,9 @@ class LW_Woo_GDPR_Account {
 
 			// Handle the downloads section.
 			echo self::display_export_downloads( $user_id, $datatypes );
+
+			// Handle the delete me section.
+			echo self::display_data_delete( $user_id, $datatypes );
 		}
 	}
 
@@ -185,7 +262,7 @@ class LW_Woo_GDPR_Account {
 				foreach ( $datatypes as $type => $label ) {
 
 					// Open up the span.
-					$build .= '<span class="lw-woo-gdpr-data-option lw-woo-gdpr-export-option">';
+					$build .= '<span class="lw-woo-gdpr-data-option lw-woo-gdpr-data-option-inline lw-woo-gdpr-export-option">';
 
 						// The input field.
 						$build .= '<input name="lw_woo_gdpr_export_option[]" id="export-option-' . esc_attr( $type ) . '" type="checkbox" value="' . esc_attr( $type ) . '" >';
@@ -201,13 +278,13 @@ class LW_Woo_GDPR_Account {
 				$build .= '</p>';
 
 				// Open the paragraph for the submit button.
-				$build .= '<p class="lw-woo-gdpr-export-submit">';
+				$build .= '<p class="lw-woo-gdpr-data-submit lw-woo-gdpr-export-submit">';
 
 					// Handle the nonce.
-					$build .= wp_nonce_field( 'lw_woo_gdpr_action', 'lw_woo_gdpr_nonce', false, false );
+					$build .= wp_nonce_field( 'lw_woo_gdpr_export_action', 'lw_woo_gdpr_export_nonce', false, false );
 
 					// The button / action combo.
-					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_export" value="' . __( 'Export Requested Data', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
+					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_export" value="' . __( 'Request Export Data', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
 					$build .= '<input name="action" value="lw_woo_gdpr_data_export" type="hidden">';
 					$build .= '<input name="lw_woo_gdpr_data_export_user" value="' . absint( $user_id ) . '" type="hidden">';
 
@@ -225,7 +302,7 @@ class LW_Woo_GDPR_Account {
 	}
 
 	/**
-	 * Display the export options.
+	 * Display the download options.
 	 *
 	 * @param  integer $user_id    The user ID we are dealing with.
 	 * @param  array   $datatypes  Our possible data types.
@@ -264,25 +341,19 @@ class LW_Woo_GDPR_Account {
 				$build .= '<p class="lw-woo-gdpr-data-options lw-woo-gdpr-download-files">';
 
 				// Now loop my types.
-				foreach ( $datatypes as $type => $label ) {
+				foreach ( $datatypes as $datatype => $label ) {
 
-					// If we have no file for this export type, skip it.
-					if ( empty( $files[ $type ] ) ) {
-						continue;
-					}
-
-					// Make my download and delete links.
-					$download   = add_query_arg( array( 'data-type' => $type, 'gdpr-action' => 'download' ), $base );
-					$delete     = add_query_arg( array( 'data-type' => $type, 'gdpr-action' => 'delete' ), $base );
+					// Figure out if we have files of this type.
+					$single = ! empty( $files[ $datatype ] ) ? $files[ $datatype ] : '';
 
 					// Open up the span.
 					$build .= '<span class="lw-woo-gdpr-data-option lw-woo-gdpr-download-option">';
 
-						// The link fields.
+						// Our label for the data type.
 						$build .= '<span class="data-option-label">' . esc_html( $label ) . '</span>';
-						$build .= '<a href="' . esc_url( $download ) . '">' . esc_html__( 'Download' ) . '</a>';
-						$build .= '&nbsp;|&nbsp;';
-						$build .= '<a href="' . esc_url( $delete ) . '">' . esc_html__( 'Delete' ) . '</a>';
+
+						// And our download / delete links.
+						$build .= lw_woo_gdpr_create_file_links( $single, $datatype, $base );
 
 					// Close the span.
 					$build .= '</span>';
@@ -294,6 +365,110 @@ class LW_Woo_GDPR_Account {
 			} else { // Show a message saying no files exist.
 				$build .= '<p>' . esc_html__( 'You have not generated any export files.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
 			}
+
+		// Close the div.
+		$build .= '</div>';
+
+		// Return our build.
+		return $build;
+	}
+
+	/**
+	 * Display the "delete me" options.
+	 *
+	 * @param  integer $user_id    The user ID we are dealing with.
+	 * @param  array   $datatypes  Our possible data types.
+	 *
+	 * @return HTML
+	 */
+	public static function display_data_delete( $user_id = 0, $datatypes = array() ) {
+
+		// Bail without my user ID or data types.
+		if ( empty( $user_id ) || empty( $datatypes ) ) {
+			return;
+		}
+
+		// Check for the existing delete requests.
+		$requests   = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+		// Set an empty.
+		$build  = '';
+
+		// Wrap it in a div.
+		$build .= '<div class="lw-woo-gdpr-section lw-woo-gdpr-data-delete-section">';
+
+			// Add some title stuff.
+			$build .= '<h3>' . esc_html__( 'Delete Me', 'liquidweb-woocommerce-gdpr' ) . '</h3>';
+
+			// Describe what to do.
+			$build .= '<p>' . esc_html__( 'Select the type(s) of data you would like to remove.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
+
+			// Set the form.
+			$build .= '<form class="lw-woo-gdpr-delete-me-form" action="" method="post">';
+
+				// Set a paragraph around the checkboxes.
+				$build .= '<p class="lw-woo-gdpr-data-options lw-woo-gdpr-delete-options">';
+
+				// Now loop my types.
+				foreach ( $datatypes as $datatype => $label ) {
+
+					// Determine if it's pending or now.
+					$didask = in_array( $datatype, (array) $requests ) ? true : false;
+
+					// Set my class.
+					$class  = 'lw-woo-gdpr-data-option lw-woo-gdpr-data-option-inline lw-woo-gdpr-delete-option';
+
+					// Add a disabled flag to orders (for now).
+					$class .= 'orders' === esc_attr( $datatype ) ? ' lw-woo-gdpr-data-option-disabled' : '';
+					$class .= ! empty( $didask ) ? ' lw-woo-gdpr-data-option-pending' : '';
+
+					// Open up the span.
+					$build .= '<span class="' . esc_attr( $class ) . '">';
+
+						// The input field or icon.
+						if ( ! empty( $didask ) ) {
+
+							// Trim off the S at the end.
+							$notplural  = rtrim( $datatype, 's' );
+
+							// Our link title.
+							$asktitle   = sprintf( __( 'Your %s data request is pending', 'liquidweb-woocommerce-gdpr' ), esc_attr( $notplural ) );
+
+							// Our icon field.
+							$build .= '<i class="lw-woo-gdpr-data-option-icon dashicons dashicons-lock"></i>' . esc_html( $label );
+
+						} else {
+
+							// The input field.
+							$build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '" ' . disabled( $datatype, 'orders' , false ) . ' >';
+
+							// The label field.
+							$build .= '<label for="delete-option-' . esc_attr( $datatype ) . '">' . esc_html( $label ) . '</label>';
+						}
+
+					// Close the span.
+					$build .= '</span>';
+				}
+
+				// Close the paragraph.
+				$build .= '</p>';
+
+				// Open the paragraph for the submit button.
+				$build .= '<p class="lw-woo-gdpr-data-submit lw-woo-gdpr-delete-submit">';
+
+					// Handle the nonce.
+					$build .= wp_nonce_field( 'lw_woo_gdpr_delete_action', 'lw_woo_gdpr_delete_nonce', false, false );
+
+					// The button / action combo.
+					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_delete" value="' . __( 'Request Data Deletion', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
+					$build .= '<input name="action" value="lw_woo_gdpr_data_delete" type="hidden">';
+					$build .= '<input name="lw_woo_gdpr_data_delete_user" value="' . absint( $user_id ) . '" type="hidden">';
+
+				// Close the paragraph.
+				$build .= '</p>';
+
+			// Close the form.
+			$build .= '</form>';
 
 		// Close the div.
 		$build .= '</div>';

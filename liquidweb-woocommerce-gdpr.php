@@ -55,7 +55,7 @@ final class LW_Woo_GDPR {
 			self::$instance = new LW_Woo_GDPR;
 
 			// Set my plugin constants.
-			self::$instance->setup_constants();
+			self::$instance->define_constants();
 
 			// Run our version compare.
 			if ( version_compare( PHP_VERSION, '5.6', '<' ) ) {
@@ -112,7 +112,7 @@ final class LW_Woo_GDPR {
 	 * @since 1.0
 	 * @return void
 	 */
-	private function setup_constants() {
+	private function define_constants() {
 
 		// Define our file base.
 		if ( ! defined( 'LW_WOO_GDPR_BASE' ) ) {
@@ -172,6 +172,7 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/utilities.php';
 
 		// Load our various classes.
+		require_once LW_WOO_GDPR_INCLS . '/class-data.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-fields.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-query-mods.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-export.php';
@@ -198,7 +199,7 @@ final class LW_Woo_GDPR {
 	/**
 	 * Create our root level folder for holding exports.
 	 *
-	 * @param  string  $key  An optional key to return part of the data array.
+	 * @param  string $key  An optional key to return part of the data array.
 	 *
 	 * @return void
 	 */
@@ -226,7 +227,7 @@ final class LW_Woo_GDPR {
 	/**
 	 * Get our root level folder for holding exports.
 	 *
-	 * @param  string  $key  An optional key to return part of the data array.
+	 * @param  string $key  An optional key to return part of the data array.
 	 *
 	 * @return void
 	 */
@@ -247,7 +248,7 @@ final class LW_Woo_GDPR {
 	 * @param  integer $user_id   What user ID this is for.
 	 * @param  string  $key       An optional key to return part of the data array.
 	 *
-	 * @return string/array Either the specific item (if key provided) or the entire array.
+	 * @return string/array       Either the specific item (if key provided) or the entire array.
 	 */
 	public function set_export_filebase( $datatype = '', $user_id = 0, $key = '' ) {
 
@@ -301,9 +302,12 @@ final class LW_Woo_GDPR {
 	/**
 	 * Fetch all of the export files available and make an array.
 	 *
+	 * @param  integer $single   Return items for a single user ID.
+	 * @param  boolean $expired  Restrict the query to only expired items.
+	 *
 	 * @return array
 	 */
-	public function get_all_export_files() {
+	public function get_all_export_files( $single = 0, $expired = false ) {
 
 		// Get my top level folder.
 		$toplevel   = $this->get_export_folder();
@@ -322,12 +326,22 @@ final class LW_Woo_GDPR {
 		// Now loop my user IDs and build an array.
 		foreach ( $user_ids as $user_id ) {
 
+			// If we are doing a single request, do the comparison.
+			if ( ! empty( $single ) && absint( $single ) !== absint( $user_id ) ) {
+				continue;
+			}
+
 			// Make my user folder.
 			$user_dir   = $toplevel['dir'] . $user_id . '/';
 			$user_url   = $toplevel['url'] . $user_id . '/';
 
-			// If my directory is empty, skip.
+			// Check if the directory is empty or not.
 			if ( lw_woo_gdpr_is_dir_empty( $user_dir ) ) {
+
+				// Remove the directory itself.
+				@rmdir( $user_dir );
+
+				// And skip.
 				continue;
 			}
 
@@ -341,23 +355,40 @@ final class LW_Woo_GDPR {
 
 				// Set my variables.
 				$filetime   = filemtime( $userfile );
-				$filename   = str_replace( $user_dir, '', $userfile );
+				$filename   = pathinfo( $userfile, PATHINFO_BASENAME );
 				$datatype   = str_replace( array( 'woo-gdpr-export-', '.csv' ), '', $filename );
 
 				// Set my expirey data.
-				$expirerate = apply_filters( 'lw_woo_gdpr_file_expire', ( WEEK_IN_SECONDS * 2 ) );
-				$expiretime = current_time( 'timestamp' ) - absint( $filetime );
-				$is_expired = absint( $expiretime ) > absint( $expirerate ) ? true : false;
+				$is_expired = lw_woo_gdpr_check_export_file( $userfile, $filetime );
 
-				// Now set up my data array.
-				$data[ $user_id ][ $datatype ] = array(
+				// If we only want expired, and we aren't expired, skip it.
+				if ( ! empty( $expired ) && empty( $is_expired ) ) {
+					continue;
+				}
+
+				// Create a dataset.
+				$dataset[ $datatype ] = array(
 					'filename'  => esc_attr( $filename ),
 					'filelink'  => esc_url( $user_url . $filename ),
 					'filepath'  => esc_attr( $userfile ),
 					'filetime'  => $filetime,
 					'expired'   => $is_expired,
 				);
+
+				// Now set up my data array.
+				$data[ $user_id ] = array(
+					'setup' => array(
+						'user_dir'  => $user_dir,
+						'user_url'  => $user_url,
+					),
+					'files' => $dataset
+				);
 			}
+		}
+
+		// Handle my data return for a single user.
+		if ( ! empty( $single ) ) {
+			return ! empty( $data[ $single ] ) ? $data[ $single ] : false;
 		}
 
 		// Return the entire thing.
@@ -372,26 +403,26 @@ final class LW_Woo_GDPR {
 	public function delete_expired_files() {
 
 		// Get all my file data, bail without them.
-		if ( false === $filedata = $this->get_all_export_files() ) {
+		if ( false === $allexpired = $this->get_all_export_files( 0, true ) ) {
 			return;
 		}
 
 		// Our before action.
-		do_action( 'lw_woo_gdpr_before_expired_delete', $filedata );
+		do_action( 'lw_woo_gdpr_before_expired_delete', $allexpired );
 
 		// Now loop my file data and break it out by user.
-		foreach ( $filedata as $user_id => $filegroups ) {
+		foreach ( $allexpired as $user_id => $folderdata ) {
 
 			// Our after action.
-			do_action( 'lw_woo_gdpr_before_expired_delete_user', $user_id, $filegroups );
+			do_action( 'lw_woo_gdpr_before_user_expired_delete', $user_id, $folderdata );
 
 			// Skip it if we have no files.
-			if ( empty( $filegroups ) ) {
+			if ( empty( $folderdata['files'] ) ) {
 				continue;
 			}
 
 			// Now loop the actual files in the array.
-			foreach ( $filegroups as $datatype => $filegroup ) {
+			foreach ( $folderdata as $datatype => $filegroup ) {
 
 				// If it isn't expired, skip it.
 				if ( empty( $filegroup['expired'] ) ) {
@@ -402,19 +433,60 @@ final class LW_Woo_GDPR {
 				wp_delete_file( $filegroup['filepath'] );
 
 				// If the file is in the meta, remove it.
-				lw_woo_gdpr_remove_export_file( $user_id, $datatype );
+				$this->remove_file_from_meta( $user_id, $datatype );
 			}
 
 			// Our after action.
-			do_action( 'lw_woo_gdpr_after_expired_delete_user', $user_id );
+			do_action( 'lw_woo_gdpr_after_user_expired_delete', $user_id );
 		}
 
 		// Our after action.
-		do_action( 'lw_woo_gdpr_after_expired_delete', $filedata );
+		do_action( 'lw_woo_gdpr_after_expired_delete', $allexpired );
 
 		// Just return that we're good.
 		return true;
 	}
+
+	/**
+	 * Remove one of the data types from the download array.
+	 *
+	 * @param  integer $user_id   The user ID we are looking at.
+	 * @param  string  $datatype  Which of the types we want.
+	 *
+	 * @return mixed
+	 */
+	public function remove_file_from_meta( $user_id = 0, $datatype = '' ) {
+
+		// Bail without our things.
+		if ( empty( $user_id ) || empty( $datatype ) ) {
+			return;
+		}
+
+		// Check for the export files.
+		$downloads  = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
+
+		// Return if we have none.
+		if ( empty( $downloads ) ) {
+			return;
+		}
+
+		// Remove it from the array.
+		unset( $downloads[ $datatype ] );
+
+		// Make sure it's not got empties.
+		$downloads  = array_filter( $downloads );
+
+		// Either update the user meta, or delete it completely.
+		if ( ! empty( $downloads ) ) {
+			update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
+		} else {
+			delete_user_meta( $user_id, 'woo_gdpr_export_files' );
+		}
+
+		// And return whatever downloads are left.
+		return $downloads;
+	}
+
 	/**
 	 * Handle the actual file download from an export.
 	 *
@@ -486,11 +558,211 @@ final class LW_Woo_GDPR {
 		}
 
 		// Now set my redirect link.
-		$link   = add_query_arg( array( 'success' => 1, 'action' => 'delete' ), home_url( '/account/privacy-data/' ) );
+		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'delete' ), home_url( '/account/privacy-data/' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
 		exit;
+	}
+
+	/**
+	 * Manage the user deletion request.
+	 *
+	 * @param  integer $user_id    The user ID requesting deletion.
+	 * @param  array   $datatypes  The type or types of data being requested.
+	 * @param  string  $action     Whether we are adding to, or removing from the data.
+	 *
+	 * @return void
+	 */
+	public function update_user_delete_requests( $user_id = 0, $datatypes = array(), $action = 'add' ) {
+
+		// Make sure we have everything required.
+		if ( empty( $user_id ) || empty( $action ) || ! in_array( esc_attr( $action ), array( 'add', 'remove' ) ) ) {
+			return false;
+		}
+
+		// Separate check for datatypes, since those only need to be for adding.
+		if ( 'add' === esc_attr( $action ) && empty( $datatypes ) ) {
+			return false;
+		}
+
+		// Get any existing requests.
+		$requests   = get_option( 'lw_woo_gdrp_delete_requests', array() );
+
+		// Manage adding one.
+		if ( 'add' === esc_attr( $action ) ) {
+
+			// Update the user meta so we can track it it.
+			update_user_meta( $user_id, 'woo_gdpr_deleteme_request', $datatypes );
+
+			// And add it to the overall data set.
+			$requests[ $user_id ] = $datatypes;
+		}
+
+		// Managing removing one.
+		if ( 'remove' === esc_attr( $action ) ) {
+
+			// Delete the user meta so we can track it it.
+			delete_user_meta( $user_id, 'woo_gdpr_deleteme_request' );
+
+			// And remove it to the overall data set.
+			unset( $requests[ $user_id ] );
+		}
+
+		// Make sure we don't have any remnants.
+		$requests   = array_filter( $requests );
+
+		// And update our data.
+		update_option( 'lw_woo_gdrp_delete_requests', $requests );
+
+		// Return that we've done it.
+		return true;
+	}
+
+	/**
+	 * Delete all the requested user data for a user.
+	 *
+	 * @param  integer $user_id   The user ID requesting deletion.
+	 * @param  string  $datatype  Which type of data they wanna delete.
+	 *
+	 * @return integer
+	 */
+	public function delete_userdata( $user_id = 0, $datatype = '' ) {
+
+		// Bail without our needed items.
+		if ( empty( $user_id ) || empty( $datatype ) ) {
+			return;
+		}
+
+		// Now switch between my data types.
+		switch ( $datatype ) {
+
+			// Fetch orders.
+			case 'orders':
+				return $this->delete_user_orders( $user_id );
+				break;
+
+			// Fetch comments.
+			case 'comments':
+				return $this->delete_user_comments( $user_id );
+				break;
+
+			// Fetch reviews
+			case 'reviews':
+				return $this->delete_user_reviews( $user_id );
+				break;
+		}
+
+		// Return our null value.
+		return 0;
+	}
+
+	/**
+	 * Delete all the requested order data for a user.
+	 *
+	 * @param  integer $user_id  The user ID requesting deletion.
+	 *
+	 * @return void
+	 */
+	public function delete_user_orders( $user_id = 0 ) {
+		return 0;
+	}
+
+	/**
+	 * Delete all the requested comment data for a user.
+	 *
+	 * @param  integer $user_id  The user ID requesting deletion.
+	 *
+	 * @return void
+	 */
+	public function delete_user_comments( $user_id = 0 ) {
+
+		// First try to get my comments.
+		if ( false === $ids = LW_Woo_GDPR_Data::get_comments_for_user( $user_id, false, true ) ) {
+			return false; // @@todo add some error returns.
+		}
+
+		// preprint( $ids, true );
+		// Now loop each one and delete it.
+		foreach ( $ids as $id ) {
+
+			// Fail if the delete fails.
+			/*
+			if ( ! wp_delete_comment( $id, true ) ) {
+				return false; // @@todo add some error returns.
+			}
+			*/
+		}
+
+		// Return the total count.
+		return count( $ids );
+	}
+
+	/**
+	 * Delete all the requested review data for a user.
+	 *
+	 * @param  integer $user_id  The user ID requesting deletion.
+	 *
+	 * @return void
+	 */
+	public function delete_user_reviews( $user_id = 0 ) {
+
+		// First try to get my reviews.
+		if ( false === $ids = LW_Woo_GDPR_Data::get_reviews_for_user( $user_id, false, true ) ) {
+			return false; // @@todo add some error returns.
+		}
+
+		// preprint( $ids, true );
+		// Now loop each one and delete it.
+		foreach ( $ids as $id ) {
+
+			// Fail if the delete fails.
+			/*
+			if ( ! wp_delete_comment( $id, true ) ) {
+				return false; // @@todo add some error returns.
+			}
+			*/
+		}
+
+		// Return the total count.
+		return count( $ids );
+	}
+
+	/**
+	 * Delete any files for a user on a delete request.
+	 *
+	 * @param  integer $user_id  The user ID requesting deletion.
+	 *
+	 * @return void
+	 */
+	public function delete_user_files( $user_id = 0 ) {
+
+		// Bail if we don't have a user ID.
+		if ( empty( $user_id ) ) {
+			return false;
+		}
+
+		// First attempt to fetch our userfiles.
+		$export = $this->get_all_export_files( absint( $user_id ) );
+
+		// Bail without any specific files to the user.
+		if ( empty( $export ) || empty( $export['files'] ) ) {
+			return false;
+		}
+
+		// Loop and dig into the file data.
+		foreach ( $export['files'] as $file ) {
+			// preprint( $file, true );
+			wp_delete_file( $file['filepath'] );
+		}
+
+		// Check if the directory is empty or not.
+		if ( ! empty( $export['setup']['user_dir'] ) && lw_woo_gdpr_is_dir_empty( $export['setup']['user_dir'] ) ) {
+			@rmdir( $export['setup']['user_dir'] );
+		}
+
+		// And be finished.
+		return true;
 	}
 
 	/**

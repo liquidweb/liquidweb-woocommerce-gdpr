@@ -35,7 +35,7 @@ class LW_Woo_GDPR_FrontEnd {
 		$vers   = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? time() : LW_WOO_GDPR_VER;
 
 		// Load our CSS file.
-		wp_enqueue_style( 'liquidweb-woo-gdpr-front', LW_WOO_GDPR_ASSETS_URL . '/css/' . $file . '.css', false, $vers, 'all' );
+		wp_enqueue_style( 'liquidweb-woo-gdpr-front', LW_WOO_GDPR_ASSETS_URL . '/css/' . $file . '.css', array( 'dashicons' ), $vers, 'all' );
 	}
 
 	// End our class.

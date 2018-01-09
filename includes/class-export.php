@@ -16,8 +16,9 @@ class LW_Woo_GDPR_Export {
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'init',                                             array( $this, 'check_export_request'        )           );
+		add_action( 'init',                                             array( $this, 'check_data_export_request'   )           );
 		add_action( 'init',                                             array( $this, 'check_data_action_request'   )           );
+		add_action( 'init',                                             array( $this, 'check_data_delete_request'   )           );
 	}
 
 	/**
@@ -25,7 +26,7 @@ class LW_Woo_GDPR_Export {
 	 *
 	 * @return void
 	 */
-	public function check_export_request() {
+	public function check_data_export_request() {
 
 		// Make sure we have the action we want.
 		if ( empty( $_POST['action'] ) || 'lw_woo_gdpr_data_export' !== esc_attr( $_POST['action'] ) ) {
@@ -33,7 +34,7 @@ class LW_Woo_GDPR_Export {
 		}
 
 		// The nonce check. ALWAYS A NONCE CHECK.
-		if ( ! isset( $_POST['lw_woo_gdpr_nonce'] ) || ! wp_verify_nonce( $_POST['lw_woo_gdpr_nonce'], 'lw_woo_gdpr_action' ) ) {
+		if ( ! isset( $_POST['lw_woo_gdpr_export_nonce'] ) || ! wp_verify_nonce( $_POST['lw_woo_gdpr_export_nonce'], 'lw_woo_gdpr_export_action' ) ) {
 			return;
 		}
 
@@ -80,10 +81,10 @@ class LW_Woo_GDPR_Export {
 		}
 
 		// Make sure it's not got empties.
-		$downloads  = array_filter( $downloads );
+		$filelist   = array_filter( $downloads );
 
 		// Bail if we have no exports to provide.
-		if ( empty( $downloads ) ) {
+		if ( empty( $filelist ) ) {
 			self::redirect_export_error( 'NO_EXPORT_FILES' );
 		}
 
@@ -91,7 +92,7 @@ class LW_Woo_GDPR_Export {
 		update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
 
 		// Now set my redirect link.
-		$link   = add_query_arg( array( 'success' => 1, 'action' => 'export' ), home_url( '/account/privacy-data/' ) );
+		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'export' ), home_url( '/account/privacy-data/' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
@@ -130,7 +131,7 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we selected something to deal with.
 		if ( empty( $_GET['data-type'] ) ) {
-			self::redirect_export_error( 'NO_DATA_TYPE' );
+			self::redirect_export_error( 'NO_DATATYPE' );
 		}
 
 		// Set my user ID and datatype.
@@ -139,7 +140,7 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
-			self::redirect_export_error( 'INVALID_DATA_TYPE' );
+			self::redirect_export_error( 'INVALID_DATATYPE' );
 		}
 
 		// Get my download files.
@@ -170,6 +171,50 @@ class LW_Woo_GDPR_Export {
 	}
 
 	/**
+	 * Look for our data delete function.
+	 *
+	 * @return void
+	 */
+	public function check_data_delete_request() {
+
+		// Make sure we have the action we want.
+		if ( empty( $_POST['action'] ) || 'lw_woo_gdpr_data_delete' !== esc_attr( $_POST['action'] ) ) {
+			return;
+		}
+
+		// The nonce check. ALWAYS A NONCE CHECK.
+		if ( ! isset( $_POST['lw_woo_gdpr_delete_nonce'] ) || ! wp_verify_nonce( $_POST['lw_woo_gdpr_delete_nonce'], 'lw_woo_gdpr_delete_action' ) ) {
+			return;
+		}
+
+		// Make sure we selected something to delete.
+		if ( empty( $_POST['lw_woo_gdpr_delete_option'] ) ) {
+			self::redirect_export_error( 'NO_OPTION' );
+		}
+
+		// Make sure we have a user of some kind.
+		if ( empty( $_POST['lw_woo_gdpr_data_delete_user'] ) ) {
+			self::redirect_export_error( 'NO_USER' );
+		}
+
+		// Set my user ID.
+		$user_id    = absint( $_POST['lw_woo_gdpr_data_delete_user'] );
+
+		// Sanitize all the types we requested.
+		$datatypes  = array_map( 'sanitize_text_field', $_POST['lw_woo_gdpr_delete_option'] );
+
+		// And update our data accordingly.
+		lw_woo_gdpr()->update_user_delete_requests( $user_id, $datatypes );
+
+		// Now set my redirect link.
+		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'deleteme' ), home_url( '/account/privacy-data/' ) );
+
+		// Do the redirect.
+		wp_redirect( $link );
+		exit;
+	}
+
+	/**
 	 * Set up and run the order export
 	 *
 	 * @param  integer $user_id  The user ID we want to check.
@@ -179,8 +224,8 @@ class LW_Woo_GDPR_Export {
 	public static function process_orders_export( $user_id = 0 ) {
 
 		// First try to get my orders.
-		if ( false === $orders = self::get_orders_for_user( $user_id ) ) {
-			self::redirect_export_error( 'NO_ORDERS' );
+		if ( false === $orders = LW_Woo_GDPR_Data::get_orders_for_user( $user_id ) ) {
+			return null; // self::redirect_export_error( 'NO_ORDERS' );
 		}
 
 		// And call my file generator.
@@ -202,8 +247,8 @@ class LW_Woo_GDPR_Export {
 	public static function process_comments_export( $user_id = 0 ) {
 
 		// First try to get my comments.
-		if ( false === $comments = self::get_comments_for_user( $user_id ) ) {
-			self::redirect_export_error( 'NO_COMMENTS' );
+		if ( false === $comments = LW_Woo_GDPR_Data::get_comments_for_user( $user_id ) ) {
+			return null; // self::redirect_export_error( 'NO_COMMENTS' );
 		}
 
 		// And call my file generator.
@@ -225,8 +270,8 @@ class LW_Woo_GDPR_Export {
 	public static function process_reviews_export( $user_id = 0 ) {
 
 		// First try to get my reviews.
-		if ( false === $reviews = self::get_reviews_for_user( $user_id ) ) {
-			self::redirect_export_error( 'NO_REVIEWS' );
+		if ( false === $reviews = LW_Woo_GDPR_Data::get_reviews_for_user( $user_id ) ) {
+			return null; // self::redirect_export_error( 'NO_REVIEWS' );
 		}
 
 		// And call my file generator.
@@ -236,122 +281,6 @@ class LW_Woo_GDPR_Export {
 
 		// Return the export.
 		return $export;
-	}
-
-	/**
-	 * Get all the orders for a particular user.
-	 *
-	 * @param  integer $user_id  The user ID we want to check.
-	 *
-	 * @return array
-	 */
-	public static function get_orders_for_user( $user_id = 0 ) {
-
-		// Bail without a user ID.
-		if ( empty( $user_id ) ) {
-			return;
-		}
-
-		// Set my args for the query.
-		$args   = array(
-			'fields'      => 'ids',
-			'nopaging'    => true,
-			'post_type'   => wc_get_order_types(),
-			'post_status' => array_keys( wc_get_order_statuses() ),
-			'meta_key'    => '_customer_user',
-			'meta_value'  => absint( $user_id ),
-		);
-
-		// Now fetch my orders.
-		$orders = get_posts( $args );
-
-		// Bail without orders.
-		if ( empty( $orders ) || is_wp_error( $orders ) ) {
-			return false;
-		}
-
-		// Format my orders and return them.
-		return lw_woo_gdpr_format_orders_export( $orders );
-	}
-
-	/**
-	 * Get all the comments for a particular user.
-	 *
-	 * @param  integer $user_id  The user ID we want to check.
-	 *
-	 * @return array
-	 */
-	public static function get_comments_for_user( $user_id = 0 ) {
-
-		// Bail without a user ID.
-		if ( empty( $user_id ) ) {
-			return;
-		}
-
-		// Set my args for the query.
-		$args   = array(
-			'user_id'   => absint( $user_id ),
-		);
-
-		// Now fetch my comments.
-		$items  = get_comments( $args );
-
-		// Bail without comments.
-		if ( empty( $items ) || is_wp_error( $items ) ) {
-			return false;
-		}
-
-		// Loop to unset the reviews.
-		foreach ( $items as $id => $comment ) {
-
-			// Skip my product reviews.
-			if ( 'product' !== get_post_type( $comment->comment_post_ID ) ) {
-				continue;
-			}
-
-			// Unset this comment from the array.
-			unset( $items[ $id ] );
-		}
-
-		// Bail if there are no actual comments left.
-		if ( empty( $items ) ) {
-			return false;
-		}
-
-		// Format my orders and return them.
-		return lw_woo_gdpr_format_comments_export( $items );
-	}
-
-	/**
-	 * Get all the reviews for a particular user.
-	 *
-	 * @param  integer $user_id  The user ID we want to check.
-	 *
-	 * @return array
-	 */
-	public static function get_reviews_for_user( $user_id = 0 ) {
-
-		// Bail without a user ID.
-		if ( empty( $user_id ) ) {
-			return;
-		}
-
-		// Set my args for the query.
-		$args   = array(
-			'user_id'   => absint( $user_id ),
-			'post_type' => 'product',
-		);
-
-		// Now fetch my reviews.
-		$items  = get_comments( $args );
-
-		// Bail without orders.
-		if ( empty( $items ) || is_wp_error( $items ) ) {
-			return false;
-		}
-
-		// Format my orders and return them.
-		return lw_woo_gdpr_format_reviews_export( $items );
 	}
 
 	/**
@@ -366,7 +295,7 @@ class LW_Woo_GDPR_Export {
 	public static function generate_export_file( $data = array(), $type = '', $user_id = 0 ) {
 
 		// Handle our before action.
-		do_action( 'lw_woo_gdpr_before_export' );
+		do_action( 'lw_woo_gdpr_before_export', $type, $data );
 
 		// Fetch the filebase setup.
 		$setup  = lw_woo_gdpr()->set_export_filebase( $type, $user_id );
@@ -396,7 +325,7 @@ class LW_Woo_GDPR_Export {
 		fclose( $export );
 
 		// Handle our after action.
-		do_action( 'lw_woo_gdpr_after_export' );
+		do_action( 'lw_woo_gdpr_after_export', $type, $data );
 
 		// And return.
 		return $setup['url'];
@@ -419,8 +348,9 @@ class LW_Woo_GDPR_Export {
 
 		// Set my args.
 		$args   = array(
-			'error'     => 1,
-			'errcode'   => esc_attr( $errcode ),
+			'gdpr-result' => 1,
+			'success'     => 0,
+			'errcode'     => esc_attr( $errcode ),
 		);
 
 		// Now set my redirect link.
