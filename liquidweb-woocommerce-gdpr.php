@@ -596,7 +596,7 @@ final class LW_Woo_GDPR {
 			update_user_meta( $user_id, 'woo_gdpr_deleteme_request', $datatypes );
 
 			// And add it to the overall data set.
-			$requests[ $user_id ] = $datatypes;
+			$requests[ $user_id ] = array( 'timestamp' => current_time( 'timestamp' ), 'datatypes' => $datatypes );
 		}
 
 		// Managing removing one.

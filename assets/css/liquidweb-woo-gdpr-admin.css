@@ -28,4 +28,13 @@
     .lw-woo-gdpr-admin-data-options .lw-woo-gdpr-admin-data-option .delete-option-name:after {
       content: " | "; }
 
+.lw-woo-gdpr-requests-admin-table {
+  max-width: 96%; }
+  .lw-woo-gdpr-requests-admin-table .checkbox-column {
+    width: 16px; }
+    .lw-woo-gdpr-requests-admin-table .checkbox-column input {
+      margin: 0; }
+  .lw-woo-gdpr-requests-admin-table .gutter-row {
+    font-size: 0; }
+
 /*# sourceMappingURL=liquidweb-woo-gdpr-admin.css.map */

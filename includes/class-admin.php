@@ -116,6 +116,9 @@ class LW_Woo_GDPR_Admin {
 
 		// Load our CSS file.
 		wp_enqueue_style( 'liquidweb-woo-gdpr-admin', LW_WOO_GDPR_ASSETS_URL . '/css/' . $file . '.css', false, $vers, 'all' );
+
+		// And our JS.
+		wp_enqueue_script( 'liquidweb-woo-gdpr-admin', LW_WOO_GDPR_ASSETS_URL . '/js/' . $file . '.js', array( 'jquery' ), $vers, true );
 	}
 
 	/**
@@ -145,7 +148,9 @@ class LW_Woo_GDPR_Admin {
 
 		// Get any pending requests.
 		$requests   = get_option( 'lw_woo_gdrp_delete_requests', array() );
-		$totalcount = ! empty( $requests ) ? count( $requests ) : 0;
+
+		// Do a check for the counts.
+		$req_count  = ! empty( $requests ) ? count( $requests ) : 0;
 
 		// Wrap the entire thing.
 		echo '<div class="wrap lw-woo-gdpr-requests-admin-wrap">';
@@ -154,54 +159,130 @@ class LW_Woo_GDPR_Admin {
 			echo '<h1 class="lw-woo-gdpr-requests-admin-title">' . get_admin_page_title() . '</h1>';
 
 			// Output some context.
-			echo '<p>' . sprintf( _n( 'You currently have %d pending GDPR "Delete Me" request.', 'You currently have %d pending GDPR "Delete Me" requests.', absint( $totalcount ), 'liquidweb-woocommerce-gdpr' ), absint( $totalcount ) );
+			echo '<p>' . sprintf( _n( 'You currently have %d pending GDPR "Delete Me" request.', 'You currently have %d pending GDPR "Delete Me" requests.', absint( $req_count ), 'liquidweb-woocommerce-gdpr' ), absint( $req_count ) );
 
 			// Handle our export form, but only if we have some.
-			if ( ! empty( $totalcount ) ) {
-
-				// Wrap it all in a form.
-				echo '<form class="lw-woo-gdpr-requests-admin-form" action="" method="post">';
-
-					// Set a paragraph around the checkboxes.
-					echo '<p class="lw-woo-gdpr-admin-data-options lw-woo-gdpr-requests-admin-data-options">';
-
-					// Now loop my types.
-					foreach ( $requests as $user_id => $datatypes ) {
-
-						// Get my user object.
-						$user   = get_user_by( 'id', $user_id );
-
-						// Open up the span.
-						echo '<span class="lw-woo-gdpr-admin-data-option lw-woo-gdpr-requests-admin-data-option">';
-
-							// The input field.
-							echo '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . absint( $user->ID ) . '" type="checkbox" value="' . absint( $user->ID ) . '" >';
-
-							// The label field.
-							echo lw_woo_gdpr_create_delete_label( $user, $datatypes );
-
-						// Close the span.
-						echo '</span>';
-					}
-
-					// Close the paragraph.
-					echo '</p>';
-
-					// Handle the nonce.
-					echo wp_nonce_field( 'lw_woo_gdpr_admin_action', 'lw_woo_gdpr_admin_nonce', false, false );
-
-					// And the submit button.
-					echo get_submit_button( __( 'Delete Requested Data', 'liquidweb-woocommerce-gdpr' ), 'primary', 'gdpr-admin-request', true, array( 'id' => 'gdpr-admin-request' ) );
-
-					// And our hidden field.
-					echo '<input name="action" value="lw_woo_gdpr_admin_delete" type="hidden">';
-
-				// Close the form.
-				echo '</form>';
-			}
+			echo self::delete_request_form( $requests );
 
 		// Close the entire thing.
 		echo '</div>';
+	}
+
+	/**
+	 * Create and return the user list table of delete requests.
+	 *
+	 * @param  array  $requests  The existing requests.
+	 *
+	 * @return HTML
+	 */
+	public static function delete_request_form( $requests = array() ) {
+
+		// Bail if we don't have any.
+		if ( empty( $requests ) ) {
+			return;
+		}
+
+		// Set our empty.
+		$build  = '';
+
+		// Wrap it all in a form.
+		$build .= '<form class="lw-woo-gdpr-requests-admin-form" action="" method="post">';
+
+			// Handle our hidden action field and the nonce.
+			$build .= '<input name="action" value="lw_woo_gdpr_admin_delete" type="hidden">';
+			$build .= wp_nonce_field( 'lw_woo_gdpr_admin_action', 'lw_woo_gdpr_admin_nonce', false, false );
+
+			// Set up the table itself.
+			$build .= '<table class="wp-list-table widefat fixed striped lw-woo-gdpr-requests-admin-table">';
+
+			// Our table header.
+			$build .= '<thead>';
+
+				// Open up our row.
+				$build .= '<tr>';
+
+					// Our checkbox "check all" field.
+					$build .= '<td class="checkbox-column">';
+						$build .= '<label class="screen-reader-text" for="cb-select-all-1">' . esc_html__( 'Select All', 'liquidweb-woocommerce-gdpr' ) . '</label>';
+						$build .= '<input class="lw-woo-gdpr-requests-select-all" id="cb-select-all-1" type="checkbox">';
+					$build .= '</td>';
+
+					// The rest of our table headers.
+					$build .= '<th>' . esc_html__( 'User Name', 'liquidweb-woocommerce-gdpr' ) . '</th>';
+					$build .= '<td>' . esc_html__( 'User Email', 'liquidweb-woocommerce-gdpr' ) . '</td>';
+					$build .= '<td>' . esc_html__( 'Request Date', 'liquidweb-woocommerce-gdpr' ) . '</td>';
+					$build .= '<td>' . esc_html__( 'Data Types', 'liquidweb-woocommerce-gdpr' ) . '</td>';
+
+				// Close up our row.
+				$build .= '</tr>';
+
+			// Close out the table header.
+			$build .= '</thead>';
+
+			// Now the table body.
+			$build .= '<tbody>';
+
+			// Now loop my types.
+			foreach ( $requests as $user_id => $request_data ) {
+
+				// Skip any that have no types requested.
+				if ( empty( $request_data['datatypes'] ) ) {
+					continue;
+				}
+
+				// Get my date info.
+				$date   = ! empty( $request_data['timestamp'] ) ? date( 'Y/m/d \a\t g:ia', $request_data['timestamp'] ) : __( 'unknown', 'liquidweb-woocommerce-gdpr' );
+
+				// Sanitize all the types we have.
+				$types  = array_map( 'sanitize_text_field', $request_data['datatypes'] );
+
+				// Get my user object.
+				$user   = get_user_by( 'id', $user_id );
+
+				// And set up the row.
+				$build .= '<tr>';
+
+					// Our checkbox for the single user.
+					$build .= '<td class="checkbox-column">';
+						$build .= '<label class="screen-reader-text" for="cb-select-' . absint( $user_id ) . '">' . esc_html__( 'Select All', 'liquidweb-woocommerce-gdpr' ) . '</label>';
+						$build .= '<input class="lw-woo-gdpr-requests-select-single" id="cb-select-' . absint( $user_id ) . '" name="lw_woo_gdpr_delete_option[]" value="' . absint( $user_id ) . '" type="checkbox">';
+					$build .= '</td>';
+
+					// Now the rest of the fields.
+					$build .= '<th><a title="' . __( 'View profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $user_id ) . '">' . esc_html( $user->display_name ) . '</a></th>';
+					$build .= '<td><a title="' . __( 'Email user', 'liquidweb-woocommerce-gdpr' ) . '" href="mailto:' . esc_url( antispambot( $user->user_email ) ) . '">' . esc_html( antispambot( $user->user_email ) ) . '</a></td>';
+					$build .= '<td>' . esc_html( $date ) . '</td>';
+					$build .= '<td><em>' . implode( ', ', $types ) . '</em></td>';
+
+				// And close up the row.
+				$build .= '</tr>';
+			}
+
+			// Close up the table body.
+			$build .= '</tbody>';
+
+			// Our table footer.
+			$build .= '<tfoot>';
+
+				// Open up our row.
+				$build .= '<tr>';
+					$build .= '<td class="gutter-row" colspan="5">&nbsp;</td>';
+				$build .= '</tr>';
+
+			// Close out the table tfoot.
+			$build .= '</tfoot>';
+
+			// And now close the entire table.
+			$build .= '</table>';
+
+			// And the submit button.
+			$build .= get_submit_button( __( 'Delete Requested Data', 'liquidweb-woocommerce-gdpr' ), 'primary', 'gdpr-admin-request', true, array( 'id' => 'gdpr-admin-request' ) );
+
+		// Close the form.
+		$build .= '</form>';
+
+		// Return our entire build.
+		return $build;
 	}
 
 	// End our class.

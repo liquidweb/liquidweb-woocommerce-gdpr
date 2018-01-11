@@ -427,14 +427,14 @@ function lw_woo_gdpr_create_file_links( $single = '', $datatype = '', $baselink 
 }
 
 /**
- * Create a label.
+ * Create a label for our user delete request.
  *
- * @param  object $user       The user object we are looking at.
- * @param  array  $datatypes  Which data types they have.
+ * @param  object $user          The user object we are looking at.
+ * @param  array  $request_data  The data contained in the request.
  *
  * @return void
  */
-function lw_woo_gdpr_create_delete_label( $user, $datatypes = array() ) {
+function lw_woo_gdpr_create_delete_label( $user, $request_data = array() ) {
 
 	// Bail without our things.
 	if ( empty( $user ) || ! is_object( $user ) ) {
@@ -453,11 +453,11 @@ function lw_woo_gdpr_create_delete_label( $user, $datatypes = array() ) {
 		// Add an edit link.
 		$label .= '<a target="_blank" href="' . get_edit_user_link( $user->ID ) . '">' . __( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '</a>';
 
-		// Check for datatypes.
-		if ( ! empty( $datatypes ) ) {
+		// Check for request data.
+		if ( ! empty( $request_data['datatypes'] ) ) {
 
 			// Sanitize all the types we have.
-			$types  = array_map( 'sanitize_text_field', $datatypes );
+			$types  = array_map( 'sanitize_text_field', $request_data['datatypes'] );
 
 			// Now add the list of what they requested.
 			$label .= '&nbsp;|&nbsp;<em>' . __( 'Requests', 'liquidweb-woocommerce-gdpr' ) . ':&nbsp;' . implode( ', ', $types ) . '</em>';
