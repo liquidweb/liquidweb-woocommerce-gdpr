@@ -137,6 +137,37 @@ function lw_woo_gdpr_optin_fields( $keys = false ) {
 }
 
 /**
+ * A simple function to return an array of the excluded Woo types.
+ *
+ * @param  string $post_type  If we want to compare a single type against it.
+ *
+ * @return array
+ */
+function lw_woo_gdpr_excluded_post_types( $post_type = '' ) {
+
+	// Set an array of what we know we need.
+	$types  = array(
+		'product',
+		'product_variation',
+		'product_visibility',
+		'shop_order',
+		'shop_coupon',
+		'shop_webhook',
+	);
+
+	// Set the types with a filter.
+	$types  = apply_filters( 'lw_woo_gdpr_excluded_post_types', $types );
+
+	// Return the entire array if we didn't pass a type.
+	if ( empty( $post_type ) ) {
+		return $types;
+	}
+
+	// Return whether it's in the type or not.
+	return in_array( $post_type, $types ) ? true : false;
+}
+
+/**
  * Get the array of each kind of export types we have.
  *
  * @param  boolean $keys  Whether we want array keys or all of it.
@@ -192,6 +223,7 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 			__( 'Comment Date', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Comment Time', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Name', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Author Email', 'liquidweb-woocommerce-gdpr' ),
 			__( 'User IP Address', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Comment Content', 'liquidweb-woocommerce-gdpr' ),
 		),
@@ -201,6 +233,7 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 			__( 'Review Date', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Review Time', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Name', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Author Email', 'liquidweb-woocommerce-gdpr' ),
 			__( 'User IP Address', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Review Rating', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Review Content', 'liquidweb-woocommerce-gdpr' ),
@@ -217,6 +250,43 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 
 	// Return the entire thing or a piece.
 	return ! empty( $type ) ? $items[ $type ] : $items;
+}
+
+/**
+ * Run our individual strings through some clean up.
+ *
+ * @param  string $string  The data we wanna clean up.
+ *
+ * @return string
+ */
+function lw_woo_gdpr_clean_export( $string ) {
+
+	// Original PHP code by Chirp Internet: www.chirp.com.au
+	// Please acknowledge use of this code by including this header.
+
+	// Handle my different string checks.
+	switch ( $string ) {
+
+		case 't':
+			$string = 'TRUE';
+			break;
+
+		case 'f':
+			$string = 'FALSE';
+			break;
+
+		case preg_match( "/^0/", $string ):
+		case preg_match( "/^\+?\d{8,}$/", $string ):
+		case preg_match( "/^\d{4}.\d{1,2}.\d{1,2}/", $string ):
+			$string = "'$string";
+			break;
+
+		case strstr( $string, '"' ):
+			$string = '"' . str_replace( '"', '""', $string ) . '"';
+			break;
+
+		// End all case breaks.
+	}
 }
 
 /**
@@ -303,13 +373,13 @@ function lw_woo_gdpr_format_comments_export( $comments = array() ) {
 
 		// Make sure we have some text.
 		$text   = ! empty( $comment->comment_content ) ? $comment->comment_content : __( 'no content provided', 'liquidweb-woocommerce-gdpr' );
-		$text   = str_replace( ',', '\,', $text );
 
 		// Set my data array up.
 		$data[] = array(
 			date( 'Y-m-d', strtotime( $comment->comment_date ) ),
 			date( 'H:i:s', strtotime( $comment->comment_date ) ),
 			$comment->comment_author,
+			$comment->comment_author_email,
 			$comment->comment_author_IP,
 			esc_attr( $text ),
 		);
@@ -342,6 +412,7 @@ function lw_woo_gdpr_format_reviews_export( $reviews = array() ) {
 			date( 'Y-m-d', strtotime( $review->comment_date ) ),
 			date( 'H:i:s', strtotime( $review->comment_date ) ),
 			$review->comment_author,
+			$review->comment_author_email,
 			$review->comment_author_IP,
 			get_comment_meta( $review->comment_ID, 'rating', true ),
 			esc_attr( $text ),

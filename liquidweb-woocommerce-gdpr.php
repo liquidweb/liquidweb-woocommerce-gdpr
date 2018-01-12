@@ -278,7 +278,7 @@ final class LW_Woo_GDPR {
 		$filedata   = array(
 			'root'  => trim( $basedir ),
 			'base'  => trim( $baseurl ),
-			'dir'   => trim( $dirfile ),
+			'file'  => trim( $dirfile ),
 			'url'   => trim( $urlfile ),
 		);
 
@@ -499,8 +499,12 @@ final class LW_Woo_GDPR {
 		// First, create my filename.
 		$filename   = pathinfo( $file_url, PATHINFO_BASENAME );
 
+		// Set our content type and character encoding.
+		$contype    = apply_filters( 'lw_woo_gdpr_file_content_type', 'text/csv' );
+		$charset    = apply_filters( 'lw_woo_gdpr_file_charset', 'UTF-16LE' );
+
 		// Output headers so that the file is downloaded rather than displayed.
-		header( 'Content-type: text/csv' );
+		header( 'Content-Type: ' . esc_attr( $contype ) . '; charset=' . esc_attr( $charset ) );
 		header( 'Content-Disposition: attachment; filename="' . esc_attr( $filename ) . '"' );
 
 		// Do not cache the file.
@@ -637,17 +641,17 @@ final class LW_Woo_GDPR {
 		// Now switch between my data types.
 		switch ( $datatype ) {
 
-			// Fetch orders.
+			// Delete orders.
 			case 'orders':
 				return $this->delete_user_orders( $user_id );
 				break;
 
-			// Fetch comments.
+			// Delete comments.
 			case 'comments':
 				return $this->delete_user_comments( $user_id );
 				break;
 
-			// Fetch reviews
+			// Delete reviews.
 			case 'reviews':
 				return $this->delete_user_reviews( $user_id );
 				break;
@@ -659,6 +663,9 @@ final class LW_Woo_GDPR {
 
 	/**
 	 * Delete all the requested order data for a user.
+	 *
+	 * This is a placeholder as we haven't decided how we are
+	 * going to approach deleting users.
 	 *
 	 * @param  integer $user_id  The user ID requesting deletion.
 	 *
@@ -687,11 +694,9 @@ final class LW_Woo_GDPR {
 		foreach ( $ids as $id ) {
 
 			// Fail if the delete fails.
-			/*
 			if ( ! wp_delete_comment( $id, true ) ) {
 				return false; // @@todo add some error returns.
 			}
-			*/
 		}
 
 		// Return the total count.
@@ -717,11 +722,9 @@ final class LW_Woo_GDPR {
 		foreach ( $ids as $id ) {
 
 			// Fail if the delete fails.
-			/*
 			if ( ! wp_delete_comment( $id, true ) ) {
 				return false; // @@todo add some error returns.
 			}
-			*/
 		}
 
 		// Return the total count.

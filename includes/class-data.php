@@ -65,13 +65,8 @@ class LW_Woo_GDPR_Data {
 			return;
 		}
 
-		// Set my args for the query.
-		$args   = array(
-			'user_id'   => absint( $user_id ),
-		);
-
 		// Now fetch my comments.
-		$items  = get_comments( $args );
+		$items  = get_comments( array( 'user_id' => absint( $user_id ) ) );
 
 		// Bail without comments.
 		if ( empty( $items ) || is_wp_error( $items ) ) {
@@ -81,8 +76,8 @@ class LW_Woo_GDPR_Data {
 		// Loop to unset the reviews.
 		foreach ( $items as $id => $comment ) {
 
-			// Skip my product reviews.
-			if ( 'product' !== get_post_type( $comment->comment_post_ID ) ) {
+			// Skip anything specific to WooCommerce.
+			if ( false === $check = lw_woo_gdpr_excluded_post_types( get_post_type( $comment->comment_post_ID ) ) ) {
 				continue;
 			}
 
@@ -120,14 +115,8 @@ class LW_Woo_GDPR_Data {
 			return;
 		}
 
-		// Set my args for the query.
-		$args   = array(
-			'user_id'   => absint( $user_id ),
-			'post_type' => 'product',
-		);
-
 		// Now fetch my reviews.
-		$items  = get_comments( $args );
+		$items  = get_comments( array( 'user_id' => absint( $user_id ), 'post_type' => 'product' ) );
 
 		// Bail without reviews.
 		if ( empty( $items ) || is_wp_error( $items ) ) {

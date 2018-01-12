@@ -301,31 +301,33 @@ class LW_Woo_GDPR_Export {
 		$setup  = lw_woo_gdpr()->set_export_filebase( $type, $user_id );
 
 		// Attempt to chmod the file.
-		if ( ! empty( $setup['dir'] ) ) {
-			@chmod( $setup['dir'], 0644 );
+		if ( is_file( $setup['file'] ) ) {
+			@chmod( $setup['file'], 0644 );
 		}
 
 		// Do our check to make sure we can write to it.
-		$export = fopen( $setup['dir'], 'wb' );
-
-		// Bail if we can't write.
-		if ( $export === false ) {
+		if ( false === $export = fopen( $setup['file'], 'w' ) ) {
 			return false;
 		}
 
 		// Set the column headers.
-		fputcsv( $export, lw_woo_gdpr_export_headers( $type ), '|' );
+		fputcsv( $export, lw_woo_gdpr_export_headers( $type ), ',', '"' );
 
 		// Save each row of the data.
 		foreach ( $data as $row ) {
-			fputcsv( $export, $row, '|' );
+
+			// Clean our data.
+			array_walk( $row, 'lw_woo_gdpr_clean_export' );
+
+			// And output the row.
+			fputcsv( $export, $row, ',', '"' );
 		}
 
 		// Close the item.
 		fclose( $export );
 
 		// Handle our after action.
-		do_action( 'lw_woo_gdpr_after_export', $type, $data );
+		do_action( 'lw_woo_gdpr_after_export', $type, $data, $setup );
 
 		// And return.
 		return $setup['url'];
