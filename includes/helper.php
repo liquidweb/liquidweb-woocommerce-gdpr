@@ -381,7 +381,8 @@ function lw_woo_gdpr_format_comments_export( $comments = array() ) {
 			$comment->comment_author,
 			$comment->comment_author_email,
 			$comment->comment_author_IP,
-			esc_attr( $text ),
+			htmlspecialchars_decode( $text, ENT_NOQUOTES ),
+			// esc_attr( $text ),
 		);
 	}
 
@@ -405,7 +406,7 @@ function lw_woo_gdpr_format_reviews_export( $reviews = array() ) {
 	foreach ( $reviews as $review ) {
 
 		// Make sure we have some text.
-		$text   = ! empty( $review->comment_content ) ? esc_attr( $review->comment_content ) : __( 'no content provided', 'liquidweb-woocommerce-gdpr' );
+		$text   = ! empty( $review->comment_content ) ? $review->comment_content : __( 'no content provided', 'liquidweb-woocommerce-gdpr' );
 
 		// Set my data array up.
 		$data[] = array(
@@ -415,7 +416,8 @@ function lw_woo_gdpr_format_reviews_export( $reviews = array() ) {
 			$review->comment_author_email,
 			$review->comment_author_IP,
 			get_comment_meta( $review->comment_ID, 'rating', true ),
-			esc_attr( $text ),
+			htmlspecialchars_decode( $text, ENT_NOQUOTES ),
+			// esc_attr( $text ),
 		);
 	}
 
