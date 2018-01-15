@@ -311,13 +311,15 @@ class LW_Woo_GDPR_Export {
 		}
 
 		// Set the column headers.
-		fputcsv( $export, lw_woo_gdpr_export_headers( $type ), ',', '"' );
+		if ( false !== $headers = lw_woo_gdpr_export_headers( $type ) ) {
+			fputcsv( $export, $headers, ',', '"' );
+		}
 
 		// Save each row of the data.
 		foreach ( $data as $row ) {
 
 			// Clean our data.
-			array_walk( $row, 'lw_woo_gdpr_clean_export' );
+			array_walk( $row, array( 'LW_Woo_GDPR_Formatting', 'clean_export' ) );
 
 			// And output the row.
 			fputcsv( $export, $row, ',', '"' );

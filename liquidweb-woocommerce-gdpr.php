@@ -172,6 +172,7 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/utilities.php';
 
 		// Load our various classes.
+		require_once LW_WOO_GDPR_INCLS . '/class-formatting.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-data.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-fields.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-query-mods.php';

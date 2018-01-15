@@ -46,7 +46,7 @@ class LW_Woo_GDPR_Data {
 		}
 
 		// Format my orders and return them.
-		return ! empty( $format ) ? lw_woo_gdpr_format_orders_export( $orders ) : $orders;
+		return ! empty( $format ) ? LW_Woo_GDPR_Formatting::orders_export( $orders ) : $orders;
 	}
 
 	/**
@@ -96,7 +96,7 @@ class LW_Woo_GDPR_Data {
 		}
 
 		// Format my comments and return them.
-		return ! empty( $format ) ? lw_woo_gdpr_format_comments_export( $items ) : $items;
+		return ! empty( $format ) ? LW_Woo_GDPR_Formatting::comments_export( $items ) : $items;
 	}
 
 	/**
@@ -129,7 +129,7 @@ class LW_Woo_GDPR_Data {
 		}
 
 		// Format my reviews and return them.
-		return ! empty( $format ) ? lw_woo_gdpr_format_reviews_export( $items ) : $items;
+		return ! empty( $format ) ? LW_Woo_GDPR_Formatting::reviews_export( $items ) : $items;
 	}
 
 	// End our class.
