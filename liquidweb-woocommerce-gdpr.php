@@ -176,7 +176,6 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/class-fields.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-query-mods.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-export.php';
-		require_once LW_WOO_GDPR_INCLS . '/class-cron.php';
 
 		// Load the classes that are only accessible via admin.
 		if ( is_admin() ) {
@@ -190,8 +189,9 @@ final class LW_Woo_GDPR {
 			require_once LW_WOO_GDPR_INCLS . '/class-account.php';
 		}
 
-		// Load our install, deactivate, and uninstall items.
+		// Load our install, cron, deactivate, and uninstall items.
 		require_once LW_WOO_GDPR_INCLS . '/install.php';
+		require_once LW_WOO_GDPR_INCLS . '/cron.php';
 		require_once LW_WOO_GDPR_INCLS . '/deactivate.php';
 		require_once LW_WOO_GDPR_INCLS . '/uninstall.php';
 	}
