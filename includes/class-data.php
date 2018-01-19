@@ -35,6 +35,16 @@ class LW_Woo_GDPR_Data {
 			'post_status' => array_keys( wc_get_order_statuses() ),
 			'meta_key'    => '_customer_user',
 			'meta_value'  => absint( $user_id ),
+			'order'       => 'ASC',
+			'orderby'     => 'meta_value_num',
+			'meta_key'    => '_date_completed',
+			'meta_query'  => array(
+				array(
+					'key'     => '_date_completed',
+					'compare' => 'EXISTS',
+					'type'    => 'numeric',
+				),
+			),
 		);
 
 		// Now fetch my orders.
@@ -66,7 +76,7 @@ class LW_Woo_GDPR_Data {
 		}
 
 		// Now fetch my comments.
-		$items  = get_comments( array( 'user_id' => absint( $user_id ) ) );
+		$items  = get_comments( array( 'user_id' => absint( $user_id ), 'order' => 'ASC' ) );
 
 		// Bail without comments.
 		if ( empty( $items ) || is_wp_error( $items ) ) {
@@ -116,7 +126,7 @@ class LW_Woo_GDPR_Data {
 		}
 
 		// Now fetch my reviews.
-		$items  = get_comments( array( 'user_id' => absint( $user_id ), 'post_type' => 'product' ) );
+		$items  = get_comments( array( 'user_id' => absint( $user_id ), 'order' => 'ASC', 'post_type' => 'product' ) );
 
 		// Bail without reviews.
 		if ( empty( $items ) || is_wp_error( $items ) ) {

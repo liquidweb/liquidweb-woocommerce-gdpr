@@ -139,6 +139,8 @@ class LW_Woo_GDPR_Formatting {
 			$data[] = array(
 				date( 'Y-m-d', strtotime( $comment->comment_date ) ),
 				date( 'H:i:s', strtotime( $comment->comment_date ) ),
+				get_the_title( $comment->comment_post_ID ),
+				get_the_permalink( $comment->comment_post_ID ),
 				$comment->comment_author,
 				$comment->comment_author_email,
 				$comment->comment_author_IP,
@@ -173,6 +175,8 @@ class LW_Woo_GDPR_Formatting {
 			$data[] = array(
 				date( 'Y-m-d', strtotime( $review->comment_date ) ),
 				date( 'H:i:s', strtotime( $review->comment_date ) ),
+				get_the_title( $review->comment_post_ID ),
+				get_the_permalink( $review->comment_post_ID ),
 				$review->comment_author,
 				$review->comment_author_email,
 				$review->comment_author_IP,

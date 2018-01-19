@@ -222,6 +222,8 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 		'comments'  => array(
 			__( 'Comment Date', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Comment Time', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Original Source Title', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Original Source URL', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Name', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Email', 'liquidweb-woocommerce-gdpr' ),
 			__( 'User IP Address', 'liquidweb-woocommerce-gdpr' ),
@@ -232,6 +234,8 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 		'reviews'   => array(
 			__( 'Review Date', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Review Time', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Product Source Title', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Product Source URL', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Name', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Author Email', 'liquidweb-woocommerce-gdpr' ),
 			__( 'User IP Address', 'liquidweb-woocommerce-gdpr' ),
