@@ -142,6 +142,85 @@ class LW_Woo_GDPR_Data {
 		return ! empty( $format ) ? LW_Woo_GDPR_Formatting::reviews_export( $items ) : $items;
 	}
 
+	/**
+	 * Build a dataset for the randomized user.
+	 *
+	 * @param  integer $user_id  The user ID we want to check.
+	 * @param  string  $key      Optional single part of the array data.
+	 *
+	 * @return array
+	 */
+	public static function get_random_userdata( $user_id = 0, $key = '' ) {
+
+		// Allow other plugins or themes to totally bypass how that array is built.
+		do_action( 'lw_woo_gdpr_get_random_userdata', $user_id, $key );
+
+		// Create my email address.
+		$first  = self::get_random_from_file( 'first-names' );
+		$last   = self::get_random_from_file( 'last-names' );
+		$email  = wp_generate_password( 13, false, false ) . '@example.com';
+		$street = rand( 12, 9999 ) . ' ' . self::get_random_from_file( 'street-names' );
+
+		// Build our data array.
+		$data   = array(
+			'first'   => $first,
+			'last'    => $last,
+			'email'   => $email,
+			'street'  => $street,
+		);
+
+		// Pass it through our filter.
+		$data   = apply_filters( 'lw_woo_gdpr_random_userdata', $data, $user_id );
+
+		// Bail without data.
+		if ( empty( $data ) ) {
+			return false;
+		}
+
+		// Return the entire set if no key was requested.
+		if ( empty( $key ) ) {
+			return $data;
+		}
+
+		// Return a single key if requested and it exists.
+		return ! empty( $key ) && isset( $data[ $key ] ) ? $data[ $key ] : false;
+	}
+
+	/**
+	 * Read one of our files and return a random entry.
+	 *
+	 * @param  string $type  Which file type we wanna read.
+	 *
+	 * @return string
+	 */
+	public static function get_random_from_file( $type = '' ) {
+
+		// Bail without being passed a type.
+		if ( empty( $type ) ) {
+			return false;
+		}
+
+		// Set my source file.
+		$source = LW_WOO_GDPR_ASSETS . '/txt/' . esc_attr( $type ) . '.txt';
+
+		// Filter our available source file.
+		$source = apply_filters( 'lw_woo_gdpr_random_srcfile', $source, $type );
+
+		// Bail without a source.
+		if ( empty( $source ) || ! is_file( $source ) ) {
+			return false;
+		}
+
+		// Handle the file read.
+		$setup  = file( $source );
+
+		// Fetch a random one.
+		$single = array_rand( array_flip( $setup ), 1 );
+
+		// Return it trimmed and cleaned.
+		return trim( wp_strip_all_tags( $single, true ) );
+	}
+
 	// End our class.
 }
 

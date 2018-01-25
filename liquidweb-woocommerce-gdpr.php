@@ -665,15 +665,68 @@ final class LW_Woo_GDPR {
 	/**
 	 * Delete all the requested order data for a user.
 	 *
-	 * This is a placeholder as we haven't decided how we are
-	 * going to approach deleting users.
+	 * This doesn't actually delete orders or users, rather,
+	 * just anonymizes the user so existing data isn't distruped.
 	 *
 	 * @param  integer $user_id  The user ID requesting deletion.
 	 *
 	 * @return void
 	 */
 	public function delete_user_orders( $user_id = 0 ) {
-		return 0;
+
+		// Get the new randomized user data.
+		if ( empty( $user_id ) || false === $data = LW_Woo_GDPR_Data::get_random_userdata( $user_id ) ) {
+			return false;
+		}
+
+		// And my setup.
+		$setup  = array(
+			'ID'            => absint( $user_id ),
+			'user_login'    => strtolower( $data['first'] . $data['last'] ),
+			'display_name'  => $data['first'] . ' ' . $data['last'],
+			'first_name'    => $data['first'],
+			'last_name'     => $data['last'],
+			'user_email'    => $data['email'],
+			'user_pass'     => wp_generate_password( 20, true, false ),
+			'role'          => 'customer',
+		);
+
+		// Run one more filter on it.
+		$setup  = apply_filters( 'lw_woo_gdpr_delete_orders_setup', $setup, $user_id );
+
+		// Bail if we nix'd it in the filter.
+		if ( empty( $setup ) ) {
+			return false;
+		}
+
+		// Get the new ID.
+		$update = wp_insert_user( $setup );
+
+		// Bail if we failed the update.
+		if ( is_wp_error( $update ) ) {
+			return false;
+		}
+
+		// Set the user meta.
+		$meta   = array(
+			'billing_first_name'    => $data['first'],
+			'billing_last_name'     => $data['last'],
+			'billing_address_1'     => $data['street'],
+			'billing_email'         => $data['email'],
+			'shipping_first_name'   => $data['first'],
+			'shipping_last_name'    => $data['last'],
+			'shipping_address_1'    => $data['street'],
+			'woo_gdpr_randomized'   => true,
+			'woo_gdpr_random_date'  => current_time( 'timestamp' ),
+		);
+
+		// Loop my meta.
+		foreach ( $meta as $key => $value ) {
+			update_user_meta( $user_id, $key, esc_attr( $value ) );
+		}
+
+		// And return true, so we know to report back.
+		return true;
 	}
 
 	/**
