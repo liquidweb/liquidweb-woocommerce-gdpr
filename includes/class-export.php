@@ -92,7 +92,7 @@ class LW_Woo_GDPR_Export {
 		update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
 
 		// Now set my redirect link.
-		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'export' ), home_url( '/account/privacy-data/' ) );
+		$link   = lw_woo_gdpr()->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'export' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
@@ -207,7 +207,7 @@ class LW_Woo_GDPR_Export {
 		lw_woo_gdpr()->update_user_delete_requests( $user_id, $datatypes );
 
 		// Now set my redirect link.
-		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'deleteme' ), home_url( '/account/privacy-data/' ) );
+		$link   = lw_woo_gdpr()->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'deleteme' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
@@ -358,7 +358,7 @@ class LW_Woo_GDPR_Export {
 		);
 
 		// Now set my redirect link.
-		$link   = add_query_arg( $args, home_url( '/account/privacy-data/' ) );
+		$link   = lw_woo_gdpr()->get_account_page_link( $args );
 
 		// Do the redirect.
 		wp_redirect( $link );

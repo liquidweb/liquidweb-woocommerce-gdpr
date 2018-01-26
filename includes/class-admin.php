@@ -13,6 +13,12 @@
 class LW_Woo_GDPR_Admin {
 
 	/**
+	 * The slugs being used for the menus.
+	 */
+	public static $menu_slug = 'pending-gdpr-requests';
+	public static $hook_slug = 'woocommerce_page_pending-gdpr-requests';
+
+	/**
 	 * Call our hooks.
 	 *
 	 * @return void
@@ -20,6 +26,7 @@ class LW_Woo_GDPR_Admin {
 	public function init() {
 		add_action( 'admin_init',                           array( $this, 'process_delete_request'      )           );
 		add_action( 'admin_enqueue_scripts',                array( $this, 'load_admin_assets'           ),  10      );
+		add_action( 'admin_notices',                        array( $this, 'process_request_notices'     )           );
 		add_action( 'admin_menu',                           array( $this, 'load_settings_menu'          ),  99      );
 	}
 
@@ -42,7 +49,7 @@ class LW_Woo_GDPR_Admin {
 
 		// Make sure we have users to process.
 		if ( empty( $_POST['lw_woo_gdpr_delete_option'] ) ) {
-			return false; // @@todo  add some error handling.
+			self::admin_page_redirect( array( 'success' => 0, 'errcode' => 'no-choices' ) );
 		}
 
 		// Sanitize all the users included.
@@ -50,7 +57,7 @@ class LW_Woo_GDPR_Admin {
 
 		// Make sure we have users to process, still.
 		if ( empty( $users ) ) {
-			return false; // @@todo  add some error handling.
+			self::admin_page_redirect( array( 'success' => 0, 'errcode' => 'no-users' ) );
 		}
 
 		// Set a total (blank) for now.
@@ -91,12 +98,8 @@ class LW_Woo_GDPR_Admin {
 		// Set a count total.
 		$count  = ! empty( $total ) ? array_sum( $total ) : 0;
 
-		// Now set my redirect link.
-		$link   = add_query_arg( array( 'success' => 1, 'action' => 'purged', 'count' => absint( $count ) ), menu_page_url( 'pending-gdpr-requests', 0 ) );
-
-		// Do the redirect.
-		wp_redirect( $link );
-		exit;
+		// Now handle my redirect.
+		self::admin_page_redirect( array( 'success' => 1, 'action' => 'purged', 'count' => absint( $count ) ) );
 	}
 
 	/**
@@ -107,6 +110,11 @@ class LW_Woo_GDPR_Admin {
 	 * @return void
 	 */
 	public function load_admin_assets( $hook ) {
+
+		// Check my hook before moving forward.
+		if ( self::$hook_slug !== esc_attr( $hook ) ) {
+			return;
+		}
 
 		// Set a file suffix structure based on whether or not we want a minified version.
 		$file   = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? 'liquidweb-woo-gdpr-admin' : 'liquidweb-woo-gdpr-admin.min';
@@ -122,6 +130,59 @@ class LW_Woo_GDPR_Admin {
 	}
 
 	/**
+	 * Set up the admin notices.
+	 *
+	 * @return mixed
+	 */
+	public function process_request_notices() {
+
+		// Make sure we have the page we want.
+		if ( empty( $_GET['page'] ) || 'pending-gdpr-requests' !== esc_attr( $_GET['page'] ) ) {
+			return;
+		}
+
+		// Do our check for the "my account" setting.
+		if ( false === get_option( 'woocommerce_myaccount_page_id', 0 ) ) {
+
+			// Handle the notice.
+			echo '<div class="notice notice-warning lw-woo-gdpr-message">';
+				echo '<p><strong>' . esc_html__( 'NOTICE:', 'liquidweb-woocommerce-gdpr' ) . '</strong> ' . esc_html__( 'You must set the "My Account" page option to use this plugin.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
+			echo '</div>';
+		}
+
+		// Now check to make sure we have a request response.
+		if ( empty( $_GET['gdpr-request-response'] ) ) {
+			return;
+		}
+
+		// Handle the success notice first.
+		if ( ! empty( $_GET['success'] ) ) {
+
+			// Output the message along with the dismissable.
+			echo '<div class="notice notice-success is-dismissible lw-woo-gdpr-message">';
+				echo '<p>' . esc_html__( 'Success! The requested data has been deleted.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
+			echo '</div>';
+
+			// And be done.
+			return;
+		}
+
+		// Figure out my error code.
+		$error_code = ! empty( $_GET['errcode'] ) ? esc_attr( $_GET['errcode'] ) : 'unknown';
+
+		// Determine my error text.
+		$error_text = lw_woo_gdpr_notice_text( $error_code );
+
+		// Output the message along with the dismissable.
+		echo '<div class="notice notice-error is-dismissible lw-woo-gdpr-message">';
+			echo '<p>' . wp_kses_post( $error_text ) . '</p>';
+		echo '</div>';
+
+		// And be done.
+		return;
+	}
+
+	/**
 	 * Load our menu item.
 	 *
 	 * @return void
@@ -134,7 +195,7 @@ class LW_Woo_GDPR_Admin {
 			__( 'Pending GDPR Requests', 'liquidweb-woocommerce-gdpr' ),
 			__( 'GDPR Requests', 'liquidweb-woocommerce-gdpr' ),
 			'manage_options',
-			'pending-gdpr-requests',
+			self::$menu_slug,
 			array( __class__, 'settings_page_view' )
 		);
 	}
@@ -283,6 +344,34 @@ class LW_Woo_GDPR_Admin {
 
 		// Return our entire build.
 		return $build;
+	}
+
+	/**
+	 * Handle our redirect within the admin settings page.
+	 *
+	 * @param  array $args  The query args to include in the redirect.
+	 *
+	 * @return void
+	 */
+	public static function admin_page_redirect( $args = array() ) {
+
+		// Don't redirect if we didn't pass any args.
+		if ( empty( $args ) ) {
+			return;
+		}
+
+		// Set my base link.
+		$base   = function_exists( 'menu_page_url' ) ? menu_page_url( self::$menu_slug, 0 ) : admin_url( 'admin.php?page=' . self::$menu_slug );
+
+		// Add the default args we need in the return.
+		$args   = wp_parse_args( array( 'gdpr-request-response' => 1 ), $args );
+
+		// Now set my redirect link.
+		$link   = add_query_arg( $args, $base );
+
+		// Do the redirect.
+		wp_redirect( $link );
+		exit;
 	}
 
 	// End our class.

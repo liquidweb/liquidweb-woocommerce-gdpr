@@ -419,7 +419,7 @@ class LW_Woo_GDPR_Account {
 					$class  = 'lw-woo-gdpr-data-option lw-woo-gdpr-data-option-inline lw-woo-gdpr-delete-option';
 
 					// Add a disabled flag to orders (for now).
-					$class .= 'orders' === esc_attr( $datatype ) ? ' lw-woo-gdpr-data-option-disabled' : '';
+					//$class .= 'orders' === esc_attr( $datatype ) ? ' lw-woo-gdpr-data-option-disabled' : '';
 					$class .= ! empty( $didask ) ? ' lw-woo-gdpr-data-option-pending' : '';
 
 					// Open up the span.
@@ -440,7 +440,9 @@ class LW_Woo_GDPR_Account {
 						} else {
 
 							// The input field.
-							$build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '" ' . disabled( $datatype, 'orders' , false ) . ' >';
+							// $build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '" ' . disabled( $datatype, 'orders' , false ) . ' >';
+
+							$build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '">';
 
 							// The label field.
 							$build .= '<label for="delete-option-' . esc_attr( $datatype ) . '">' . esc_html( $label ) . '</label>';
@@ -456,13 +458,22 @@ class LW_Woo_GDPR_Account {
 				// Open the paragraph for the submit button.
 				$build .= '<p class="lw-woo-gdpr-data-submit lw-woo-gdpr-delete-submit">';
 
-					// Handle the nonce.
-					$build .= wp_nonce_field( 'lw_woo_gdpr_delete_action', 'lw_woo_gdpr_delete_nonce', false, false );
+					// Check how many requests we have, if all three are there don't show the button.
+					if ( count( $requests ) === 3 ) {
 
-					// The button / action combo.
-					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_delete" value="' . __( 'Request Data Deletion', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
-					$build .= '<input name="action" value="lw_woo_gdpr_data_delete" type="hidden">';
-					$build .= '<input name="lw_woo_gdpr_data_delete_user" value="' . absint( $user_id ) . '" type="hidden">';
+						// Just a simple statement abouit what's pending.
+						$build .= '<em>' . esc_html__( 'Your requests are pending.', 'liquidweb-woocommerce-gdpr' ) . '</em>';
+
+					} else {
+
+						// Handle the nonce.
+						$build .= wp_nonce_field( 'lw_woo_gdpr_delete_action', 'lw_woo_gdpr_delete_nonce', false, false );
+
+						// The button / action combo.
+						$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_delete" value="' . __( 'Request Data Deletion', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
+						$build .= '<input name="action" value="lw_woo_gdpr_data_delete" type="hidden">';
+						$build .= '<input name="lw_woo_gdpr_data_delete_user" value="' . absint( $user_id ) . '" type="hidden">';
+					}
 
 				// Close the paragraph.
 				$build .= '</p>';

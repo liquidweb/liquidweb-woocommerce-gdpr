@@ -198,6 +198,25 @@ final class LW_Woo_GDPR {
 	}
 
 	/**
+	 * Get our "my account" page to use in the plugin.
+	 *
+	 * @param  array  $args  Any query args to add to the base URL.
+	 *
+	 * @return string.
+	 */
+	public function get_account_page_link( $args = array() ) {
+
+		// Set my base link.
+		$base   = get_permalink( get_option( 'woocommerce_myaccount_page_id' ) );
+
+		// Add our link.
+		$link   = rtrim( $base, '/' ) . '/privacy-data/';
+
+		// Return the link with or without args.
+		return ! empty( $args ) ? add_query_arg( $args, $link ) : $link;
+	}
+
+	/**
 	 * Create our root level folder for holding exports.
 	 *
 	 * @param  string $key  An optional key to return part of the data array.
@@ -563,7 +582,7 @@ final class LW_Woo_GDPR {
 		}
 
 		// Now set my redirect link.
-		$link   = add_query_arg( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'delete' ), home_url( '/account/privacy-data/' ) );
+		$link   = lw_woo_gdpr()->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'delete' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
@@ -668,6 +687,9 @@ final class LW_Woo_GDPR {
 	 * This doesn't actually delete orders or users, rather,
 	 * just anonymizes the user so existing data isn't distruped.
 	 *
+	 * I'm well aware that this name is misleading but sometimes
+	 * that's just how the world works. We all adjust accordingly.
+	 *
 	 * @param  integer $user_id  The user ID requesting deletion.
 	 *
 	 * @return void
@@ -679,10 +701,15 @@ final class LW_Woo_GDPR {
 			return false;
 		}
 
+		// Allow other things to hook into this process.
+		do_action( 'lw_woo_gdpr_before_orders_delete', $user_id );
+
 		// And my setup.
 		$setup  = array(
 			'ID'            => absint( $user_id ),
-			'user_login'    => strtolower( $data['first'] . $data['last'] ),
+			'user_login'    => $data['login'], // this doesn't update, but we are keeping it in case.
+			'user_nicename' => $data['login'],
+			'nickname'      => $data['login'],
 			'display_name'  => $data['first'] . ' ' . $data['last'],
 			'first_name'    => $data['first'],
 			'last_name'     => $data['last'],
@@ -707,6 +734,12 @@ final class LW_Woo_GDPR {
 			return false;
 		}
 
+		// Call the global.
+		global $wpdb;
+
+		// Update the user login, which isn't triggered on the `wp_insert_user` function.
+		$wpdb->update( $wpdb->users, array( 'user_login' => $data['login'] ), array( 'ID' => $user_id ) );
+
 		// Set the user meta.
 		$meta   = array(
 			'billing_first_name'    => $data['first'],
@@ -724,6 +757,13 @@ final class LW_Woo_GDPR {
 		foreach ( $meta as $key => $value ) {
 			update_user_meta( $user_id, $key, esc_attr( $value ) );
 		}
+
+		// Delete some extras.
+		delete_user_meta( $user_id, 'billing_address_2' );
+		delete_user_meta( $user_id, 'shipping_address_2' );
+
+		// Allow other things to hook into this process.
+		do_action( 'lw_woo_gdpr_after_orders_delete', $user_id );
 
 		// And return true, so we know to report back.
 		return true;

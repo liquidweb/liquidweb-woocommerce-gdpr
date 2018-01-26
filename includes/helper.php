@@ -7,7 +7,6 @@
  * @package LiquidWeb_Woo_GDPR
  */
 
-
 /**
  * Check an code and (usually an error) return the appropriate text.
  *

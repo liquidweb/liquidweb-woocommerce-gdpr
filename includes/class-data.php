@@ -155,14 +155,18 @@ class LW_Woo_GDPR_Data {
 		// Allow other plugins or themes to totally bypass how that array is built.
 		do_action( 'lw_woo_gdpr_get_random_userdata', $user_id, $key );
 
+		// Set a string to use as the login.
+		$login  = wp_generate_password( 13, false, false );
+
 		// Create my email address.
 		$first  = self::get_random_from_file( 'first-names' );
 		$last   = self::get_random_from_file( 'last-names' );
-		$email  = wp_generate_password( 13, false, false ) . '@example.com';
+		$email  = $login . '@example.com';
 		$street = rand( 12, 9999 ) . ' ' . self::get_random_from_file( 'street-names' );
 
 		// Build our data array.
 		$data   = array(
+			'login'   => $login,
 			'first'   => $first,
 			'last'    => $last,
 			'email'   => $email,
