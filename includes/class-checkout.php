@@ -137,11 +137,14 @@ class LW_Woo_GDPR_Checkout {
 	 * @return void
 	 */
 	public function update_customer_optin( $customer, $data ) {
-		// preprint( $customer, true );
-		// preprint( $data, true );
+
+		// Bail without data or customer info.
+		if ( empty( $customer ) || ! is_object( $customer ) || empty( $data ) || ! is_array( $data ) ) {
+			return;
+		}
+
 		// Get my fields.
 		$fields = lw_woo_gdpr_optin_fields( true );
-		// preprint( $fields, true );
 
 		// Bail without my fields.
 		if ( empty( $fields ) ) {

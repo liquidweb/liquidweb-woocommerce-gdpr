@@ -68,6 +68,14 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'no-users' :
+			return __( 'No users were selected.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'bad-nonce' :
+			return __( 'The required nonce was missing or invalid.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'unknown' :
 		case 'unknown_error' :
 			return __( 'There was an unknown error with your request.', 'liquidweb-woocommerce-gdpr' );
@@ -277,7 +285,7 @@ function lw_woo_gdpr_check_export_file( $userfile = '', $filetime = 0 ) {
 	$expirerate = apply_filters( 'lw_woo_gdpr_file_expire', ( WEEK_IN_SECONDS * 2 ) );
 
 	// See how long we have on the file expiration.
-	$expiretime = current_time( 'timestamp' ) - absint( $filetime );
+	$expiretime = current_time( 'timestamp', 1 ) - absint( $filetime );
 
 	// Return our boolean.
 	return absint( $expiretime ) > absint( $expirerate ) ? true : false;
@@ -371,4 +379,25 @@ function lw_woo_gdpr_create_delete_label( $user, $request_data = array() ) {
 
 	// Return my entire thing.
 	return $label;
+}
+
+/**
+ * Run a check to see if there are pending requests.
+ *
+ * @param  string $return  How to return it. Either the data or a boolean.
+ *
+ * @return mixed
+ */
+function lw_woo_gdpr_maybe_requests_exist( $return = 'data' ) {
+
+	// First grab my requests.
+	$requests   = get_option( 'lw_woo_gdrp_delete_requests', array() );
+
+	// Return false if we have none.
+	if ( empty( $requests ) ) {
+		return false;
+	}
+
+	// Return one or the other.
+	return 'boolean' === sanitize_text_field( $return ) ? true : $requests;
 }

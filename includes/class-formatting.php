@@ -68,13 +68,11 @@ class LW_Woo_GDPR_Formatting {
 			// Grab the order.
 			$order  = wc_get_order( $order_id );
 
-			// preprint( $order, true );
+			// Fetch the items inside the order.
 			$items  = $order->get_items();
-			// preprint( $items, true );
 
 			// Loop my items.
 			if ( ! empty( $items ) ) {
-				// preprint( $items, true );
 
 				// Set up our initial data set.
 				$setup  = array(
@@ -85,7 +83,6 @@ class LW_Woo_GDPR_Formatting {
 					$order->get_payment_method_title(),
 					count( $items ),
 				);
-				// preprint( $setup );
 
 				// Set an empty.
 				$prod   = array();

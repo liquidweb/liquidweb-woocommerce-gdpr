@@ -149,6 +149,11 @@ final class LW_Woo_GDPR {
 			define( 'LW_WOO_GDPR_ASSETS_URL', LW_WOO_GDPR_URL . 'assets' );
 		}
 
+		// Set our menu base slug constant.
+		if ( ! defined( 'LW_WOO_GDPR_MENU_BASE' ) ) {
+			define( 'LW_WOO_GDPR_MENU_BASE', 'pending-gdpr-requests' );
+		}
+
 		// Set our front menu endpoint constant.
 		if ( ! defined( 'LW_WOO_GDPR_FRONT_VAR' ) ) {
 			define( 'LW_WOO_GDPR_FRONT_VAR', 'privacy-data' );
@@ -181,6 +186,7 @@ final class LW_Woo_GDPR {
 		// Load the classes that are only accessible via admin.
 		if ( is_admin() ) {
 			require_once LW_WOO_GDPR_INCLS . '/class-admin.php';
+			require_once LW_WOO_GDPR_INCLS . '/class-request-table.php';
 		}
 
 		// Load the classes that are only accessible via the front end.
@@ -198,11 +204,20 @@ final class LW_Woo_GDPR {
 	}
 
 	/**
-	 * Get our "my account" page to use in the plugin.
+	 * Return our base link, with function fallbacks.
+	 *
+	 * @return string
+	 */
+	public static function get_admin_menu_link() {
+		return ! function_exists( 'menu_page_url' ) ? admin_url( 'admin.php?page=' . LW_WOO_GDPR_MENU_BASE ) : menu_page_url( LW_WOO_GDPR_MENU_BASE, false );
+	}
+
+	/**
+	 * Get our "My Account" page to use in the plugin.
 	 *
 	 * @param  array  $args  Any query args to add to the base URL.
 	 *
-	 * @return string.
+	 * @return string
 	 */
 	public function get_account_page_link( $args = array() ) {
 
@@ -620,7 +635,7 @@ final class LW_Woo_GDPR {
 			update_user_meta( $user_id, 'woo_gdpr_deleteme_request', $datatypes );
 
 			// And add it to the overall data set.
-			$requests[ $user_id ] = array( 'timestamp' => current_time( 'timestamp' ), 'datatypes' => $datatypes );
+			$requests[ $user_id ] = array( 'timestamp' => current_time( 'timestamp', 1 ), 'datatypes' => $datatypes );
 		}
 
 		// Managing removing one.
@@ -750,7 +765,7 @@ final class LW_Woo_GDPR {
 			'shipping_last_name'    => $data['last'],
 			'shipping_address_1'    => $data['street'],
 			'woo_gdpr_randomized'   => true,
-			'woo_gdpr_random_date'  => current_time( 'timestamp' ),
+			'woo_gdpr_random_date'  => current_time( 'timestamp', 1 ),
 		);
 
 		// Loop my meta.
@@ -783,7 +798,6 @@ final class LW_Woo_GDPR {
 			return false; // @@todo add some error returns.
 		}
 
-		// preprint( $ids, true );
 		// Now loop each one and delete it.
 		foreach ( $ids as $id ) {
 
@@ -811,7 +825,6 @@ final class LW_Woo_GDPR {
 			return false; // @@todo add some error returns.
 		}
 
-		// preprint( $ids, true );
 		// Now loop each one and delete it.
 		foreach ( $ids as $id ) {
 
@@ -849,7 +862,6 @@ final class LW_Woo_GDPR {
 
 		// Loop and dig into the file data.
 		foreach ( $export['files'] as $file ) {
-			// preprint( $file, true );
 			wp_delete_file( $file['filepath'] );
 		}
 
