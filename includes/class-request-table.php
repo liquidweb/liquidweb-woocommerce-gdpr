@@ -66,6 +66,9 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		// Do the column headers
 		$this->_column_headers = array( $columns, $hidden, $sortable );
 
+		// Make sure we have the single action running.
+		$this->process_single_action();
+
 		// Make sure we have the bulk action running.
 		$this->process_bulk_action();
 
@@ -83,7 +86,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		// Build our array of column setups.
 		$setup  = array(
 			'cb'            => '<input type="checkbox" />',
-			'display_name'  => __( 'Customer Name', 'liquidweb-woocommerce-gdpr' ),
+			'visible_name'  => __( 'Customer Name', 'liquidweb-woocommerce-gdpr' ),
 			'email_address' => __( 'Email Address', 'liquidweb-woocommerce-gdpr' ),
 			'request_date'  => __( 'Request Date', 'liquidweb-woocommerce-gdpr' ),
 			'datatypes'     => __( 'Data Types', 'liquidweb-woocommerce-gdpr' ),
@@ -115,7 +118,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 
 		// Build our array of sortable columns.
 		$setup  = array(
-			'display_name'  => array( 'display_name', false ),
+			'visible_name'  => array( 'visible_name', false ),
 			'email_address' => array( 'email_address', true ),
 			'request_date'  => array( 'request_date', true ),
 		);
@@ -155,19 +158,22 @@ class UserDeleteRequests_Table extends WP_List_Table {
 	}
 
 	/**
-	 * The display_name column.
+	 * The visible name column.
 	 *
 	 * @param  array  $item  The item from the data array.
 	 *
 	 * @return string
 	 */
-	protected function column_display_name( $item ) {
+	protected function column_visible_name( $item ) {
 
 		// Build my markup.
 		$setup  = '<a title="' . __( 'View profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $item['id'] ) . '">' . esc_html( $item['showname'] ) . '</a>';
 
-		// Return my formatted date.
-		return apply_filters( 'lw_woo_gdpr_column_display_name', $setup, $item );
+		// Create my formatted date.
+		$setup  = apply_filters( 'lw_woo_gdpr_column_visible_name', $setup, $item );
+
+		// Return, along with our row actions.
+		return $setup . $this->row_actions( $this->setup_row_action_items( $item ) );
 	}
 
 	/**
@@ -374,6 +380,87 @@ class UserDeleteRequests_Table extends WP_List_Table {
 
 		// Now handle my redirect.
 		LW_Woo_GDPR_Admin::admin_page_redirect( array( 'success' => 1, 'action' => 'deleted', 'count' => absint( $count ) ) );
+	}
+
+	/**
+	 * Handle the single row action.
+	 *
+	 * @return void
+	 */
+	protected function process_single_action() {
+
+		// Make sure we have the page we want.
+		if ( empty( $_GET['page'] ) || LW_WOO_GDPR_MENU_BASE !== esc_attr( $_GET['page'] ) ) {
+			return;
+		}
+
+		// Bail if we aren't on the page.
+		if ( empty( $_GET['lw-woo-action'] ) || 'delete-single' !== sanitize_text_field( $_GET['lw-woo-action'] ) ) {
+			return;
+		}
+
+		// Fail on no user ID.
+		if ( empty( $_GET['user-id'] ) ) {
+			LW_Woo_GDPR_Admin::admin_page_redirect( array( 'success' => 0, 'errcode' => 'no-user' ) );
+		}
+
+		// Set my user ID.
+		$user_id = absint( $_GET['user-id'] );
+
+		// Fail on a bad nonce.
+		if ( empty( $_GET['nonce'] ) || ! wp_verify_nonce( $_GET['nonce'], 'lw_woo_delete_single_' . $user_id ) ) {
+			LW_Woo_GDPR_Admin::admin_page_redirect( array( 'success' => 0, 'errcode' => 'bad-nonce' ) );
+		}
+
+		// Fetch my data types and downloads.
+		$datatypes  = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+		// Handle my datatypes if we have them.
+		if ( ! empty( $datatypes ) ) {
+
+			// Loop my types.
+			foreach ( $datatypes as $datatype ) {
+
+				// Remove any files from the meta we have for this data type.
+				lw_woo_gdpr()->remove_file_from_meta( $user_id, $datatype );
+
+				// Delete the datatype.
+				lw_woo_gdpr()->delete_userdata( $user_id, $datatype );
+			}
+		}
+
+		// Remove any data files we may have.
+		lw_woo_gdpr()->delete_user_files( $user_id );
+
+		// Remove this user from our overall data array.
+		lw_woo_gdpr()->update_user_delete_requests( $user_id, null, 'remove' );
+
+		// Now handle my redirect.
+		LW_Woo_GDPR_Admin::admin_page_redirect( array( 'success' => 1, 'action' => 'deleted', 'count' => 1 ) );
+	}
+
+	/**
+	 * Create the row actions we want.
+	 *
+	 * @param  array $item  The item from the dataset.
+	 *
+	 * @return array
+	 */
+	private function setup_row_action_items( $item ) {
+
+		// Create our delete link.
+		$nonce  = wp_create_nonce( 'lw_woo_delete_single_' . absint( $item['id'] ) );
+		$delete = add_query_arg( array( 'user-id' => absint( $item['id'] ), 'lw-woo-action' => 'delete-single', 'nonce' => $nonce ), lw_woo_gdpr()->get_admin_menu_link() );
+
+		// Create the array.
+		$setup  = array(
+			'profile'   => '<a title="' . __( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $item['id'] ) . '">' . esc_html( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'email'     => '<a title="' . __( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( 'mailto:' . antispambot( $item['email_address'] ) ) . '">' . esc_html( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'delete'    => '<a title="' . __( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( $delete ) . '">' . esc_html( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+		);
+
+		// Return our row actions.
+		return apply_filters( 'lw_woo_gdpr_table_row_actions', $setup, $item );
 	}
 
 	/**
