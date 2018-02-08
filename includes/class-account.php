@@ -18,8 +18,8 @@ class LW_Woo_GDPR_Account {
 	 * @return void
 	 */
 	public function init() {
-		add_filter( 'the_title',                                        array( $this, 'add_endpoint_title'          )           );
 		add_action( 'woocommerce_before_account_navigation',            array( $this, 'add_endpoint_notices'        )           );
+		add_filter( 'the_title',                                        array( $this, 'add_endpoint_title'          )           );
 		add_filter( 'woocommerce_account_menu_items',                   array( $this, 'add_endpoint_menu_item'      )           );
 		add_action( 'woocommerce_account_privacy-data_endpoint',        array( $this, 'add_endpoint_content'        )           );
 	}
@@ -95,7 +95,7 @@ class LW_Woo_GDPR_Account {
 		if ( isset( $wp_query->query_vars[ LW_WOO_GDPR_FRONT_VAR ] ) ) {
 
 			// New page title.
-			$title = __( 'My Privacy Data', 'liquidweb-woocommerce-gdpr' );
+			$title = apply_filters( 'lw_woo_gdpr_endpoint_title', __( 'My Privacy Data', 'liquidweb-woocommerce-gdpr' ) );
 
 			// Remove the filter so we don't loop endlessly.
 			remove_filter( 'the_title', array( $this, 'add_endpoint_title' ) );
@@ -114,8 +114,11 @@ class LW_Woo_GDPR_Account {
 	 */
 	public function add_endpoint_menu_item( $items ) {
 
+		// Set up our menu item title.
+		$title  = apply_filters( 'lw_woo_gdpr_endpoint_menu_title', __( 'Privacy Data', 'liquidweb-woocommerce-gdpr' ) );
+
 		// Add it to the array.
-		$items  = wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => __( 'Privacy Data', 'liquidweb-woocommerce-gdpr' ) ), $items );
+		$items  = wp_parse_args( array( LW_WOO_GDPR_FRONT_VAR => esc_attr( $title ) ), $items );
 
 		// If we don't have the logout link, just tack ours on the end.
 		if ( ! isset( $items['customer-logout'] ) ) {
@@ -144,7 +147,6 @@ class LW_Woo_GDPR_Account {
 
 		// Get my current customer.
 		$user_id    = get_current_user_id();
-		//$customer   = new WC_Customer( $user_id );
 
 		// Get my export types.
 		$datatypes  = lw_woo_gdpr_export_types();
