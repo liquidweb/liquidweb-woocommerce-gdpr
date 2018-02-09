@@ -15,7 +15,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 }
 
 /**
- * Create a new table class that will extend the WP_List_Table
+ * Create a new table class that will extend the WP_List_Table.
  */
 class UserDeleteRequests_Table extends WP_List_Table {
 

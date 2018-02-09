@@ -89,13 +89,11 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 }
 
 /**
- * Get the array of each kind of opt-in box we have.
- *
- * @param  boolean $keys  Whether we want array keys or all of it.
+ * Our default values, which will seed the settings tab.
  *
  * @return array
  */
-function lw_woo_gdpr_optin_fields( $keys = false ) {
+function lw_woo_gdpr_optin_defaults() {
 
 	// Set an array of what we know we need.
 	$fields = array(
@@ -132,7 +130,23 @@ function lw_woo_gdpr_optin_fields( $keys = false ) {
 	);
 
 	// Set the fields with a filter.
-	$fields = apply_filters( 'lw_woo_gdpr_optin_fields', $fields );
+	$fields = apply_filters( 'lw_woo_gdpr_optin_defaults', $fields );
+
+	// Bail if we have no fields.
+	return ! empty( $fields ) ? $fields : false;
+}
+
+/**
+ * Get the array of each kind of opt-in box we have.
+ *
+ * @param  boolean $keys  Whether we want array keys or all of it.
+ *
+ * @return array
+ */
+function lw_woo_gdpr_optin_fields( $keys = false ) {
+
+	// Set the fields with a filter.
+	$fields = lw_woo_gdpr_optin_defaults();
 
 	// Bail if we have no fields.
 	if ( empty( $fields ) ) {

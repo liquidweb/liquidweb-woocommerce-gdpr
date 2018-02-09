@@ -187,6 +187,7 @@ final class LW_Woo_GDPR {
 		if ( is_admin() ) {
 			require_once LW_WOO_GDPR_INCLS . '/class-admin.php';
 			require_once LW_WOO_GDPR_INCLS . '/class-request-table.php';
+			require_once LW_WOO_GDPR_INCLS . '/class-settings-tab.php';
 		}
 
 		// Load the classes that are only accessible via the front end.
