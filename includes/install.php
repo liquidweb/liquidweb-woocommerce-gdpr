@@ -9,6 +9,9 @@ function lw_woo_gdpr_install() {
 	// Create our export folder.
 	lw_woo_gdpr()->create_export_folder();
 
+	// Create our option key with the initial defaults.
+	update_option( 'lw_woo_gdpr_optin_fields', lw_woo_gdpr_optin_defaults(), 'no' );
+
 	// Set up our empty dataset for delete requests.
 	update_option( 'lw_woo_gdrp_delete_requests', array(), 'no' );
 

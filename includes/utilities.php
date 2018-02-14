@@ -215,3 +215,32 @@ if ( ! function_exists( 'lw_woo_gdpr_gmt_to_local' ) ) {
 
 	// End the function exists checks.
 }
+
+
+if ( ! function_exists( 'lw_woo_gdpr_make_action_key' ) ) {
+	/**
+	 * Take a string and make it all cleaned up for using in an action.
+	 *
+	 * @param  string $key     What date format we want to return. False for the timestamp.
+	 *
+	 * @return string $timestamp  The timestamp in GMT.
+	 */
+	function lw_woo_gdpr_make_action_key( $key = '' ) {
+
+		// Bail if we don't have a key to check.
+		if ( empty( $key ) ) {
+			return;
+		}
+
+		// Run the main cleanup.
+		$clean  = sanitize_key( $key );
+
+		// Now swap the dashes for underscores.
+		$strip  = str_replace( array( '-', ' ' ), '_', $clean );
+
+		// Return it.
+		return 'lw_woo_gdpr_' . esc_attr( $strip ) . '_optin';
+	}
+
+	// End the function exists checks.
+}

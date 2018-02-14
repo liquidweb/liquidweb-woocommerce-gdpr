@@ -98,39 +98,46 @@ function lw_woo_gdpr_optin_defaults() {
 	// Set an array of what we know we need.
 	$fields = array(
 
-		// Our item.
-		'optin-1'   => array(
+		// Our general contact list item.
+		'general-contact' => array(
 			'type'      => 'checkbox',
-			'id'        => 'gdpr-optin-1',
-			'name'      => 'gdpr-optin[optin-1]',
-			'title'     => __( 'Opt In Field 1', 'liquidweb-woocommerce-gdpr' ),
-			'label'     => __( 'This is an opt in field', 'liquidweb-woocommerce-gdpr' ),
-			'required'  => true,
-		),
-
-		// Our item.
-		'optin-2'   => array(
-			'type'      => 'checkbox',
-			'id'        => 'gdpr-optin-2',
-			'name'      => 'gdpr-optin[optin-2]',
-			'title'     => __( 'Opt In Field 3', 'liquidweb-woocommerce-gdpr' ),
-			'label'     => __( 'This is a different opt in field', 'liquidweb-woocommerce-gdpr' ),
+			'id'        => 'general-contact',
+			'action'    => 'lw_woo_gdpr_general_contact_optin',
+			'title'     => __( 'General Contact', 'liquidweb-woocommerce-gdpr' ),
+			'label'     => __( 'You may contact me regarding my order or account.', 'liquidweb-woocommerce-gdpr' ),
 			'required'  => false,
 		),
 
-		// Our item.
-		'optin-3'   => array(
+		// Our mailing list item.
+		'mailing-list' => array(
 			'type'      => 'checkbox',
-			'id'        => 'gdpr-optin-3',
-			'name'      => 'gdpr-optin[optin-3]',
-			'title'     => __( 'Opt In Field 3', 'liquidweb-woocommerce-gdpr' ),
-			'label'     => __( 'This is yet another opt in field', 'liquidweb-woocommerce-gdpr' ),
-			'required'  => true,
+			'id'        => 'mailing-list',
+			'action'    => 'lw_woo_gdpr_mailing_list_optin',
+			'title'     => __( 'Mailing List', 'liquidweb-woocommerce-gdpr' ),
+			'label'     => __( 'You may include me on your mailing list.', 'liquidweb-woocommerce-gdpr' ),
+			'required'  => false,
 		),
 	);
 
+	// Do our check for the "terms and conditions" setting.
+	$tc = get_option( 'woocommerce_terms_page_id', 0 );
+
+	// Include one if we haven't turned it on.
+	if ( empty( $tc ) ) {
+
+		// Add our terms and conditions. But people should have their own.
+		$fields['terms-conditions'] = array(
+			'type'      => 'checkbox',
+			'id'        => 'terms-conditions',
+			'action'    => 'lw_woo_gdpr_terms_conditions_optin',
+			'title'     => __( 'Terms and Conditions', 'liquidweb-woocommerce-gdpr' ),
+			'label'     => __( 'I have read and understand the terms and conditions.', 'liquidweb-woocommerce-gdpr' ),
+			'required'  => true,
+		);
+	}
+
 	// Set the fields with a filter.
-	$fields = apply_filters( 'lw_woo_gdpr_optin_defaults', $fields );
+	$fields = apply_filters( 'lw_woo_gdpr_optin_field_defaults', $fields );
 
 	// Bail if we have no fields.
 	return ! empty( $fields ) ? $fields : false;
@@ -145,8 +152,8 @@ function lw_woo_gdpr_optin_defaults() {
  */
 function lw_woo_gdpr_optin_fields( $keys = false ) {
 
-	// Set the fields with a filter.
-	$fields = lw_woo_gdpr_optin_defaults();
+	// Fetch our fields.
+	$fields = get_option( 'lw_woo_gdpr_optin_fields', lw_woo_gdpr_optin_defaults() );
 
 	// Bail if we have no fields.
 	if ( empty( $fields ) ) {

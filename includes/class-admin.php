@@ -17,6 +17,8 @@ class LW_Woo_GDPR_Admin {
 	 */
 	public static $menu_slug = LW_WOO_GDPR_MENU_BASE;
 	public static $hook_slug = 'woocommerce_page_' . LW_WOO_GDPR_MENU_BASE;
+	public static $woo_slug  = 'woocommerce_page_wc-settings';
+	public static $woo_tab   = 'gdpr_optins';
 
 	/**
 	 * Call our hooks.
@@ -39,7 +41,12 @@ class LW_Woo_GDPR_Admin {
 	public function load_admin_assets( $hook ) {
 
 		// Check my hook before moving forward.
-		if ( self::$hook_slug !== esc_attr( $hook ) ) {
+		if ( ! in_array( esc_attr( $hook ), array( self::$hook_slug, self::$woo_slug ) ) ) {
+			return;
+		}
+
+		// Check the tab portion.
+		if ( ! empty( $_GET['tab'] ) && self::$woo_tab !== esc_attr( $_GET['tab'] ) ) {
 			return;
 		}
 

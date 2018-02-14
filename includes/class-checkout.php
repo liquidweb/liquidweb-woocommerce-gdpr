@@ -162,6 +162,12 @@ class LW_Woo_GDPR_Checkout {
 
 			// And add it to the customer object.
 			$customer->update_meta_data( $meta_key, $meta_value );
+
+			// make my action key.
+			$action = lw_woo_gdpr_make_action_key( $field );
+
+			// Run an action for each individual opt-in.
+			do_action( 'lw_woo_gdpr_{$action}_optin', $field );
 		}
 
 		// And just be done.
