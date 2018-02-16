@@ -222,10 +222,12 @@ if ( ! function_exists( 'lw_woo_gdpr_make_action_key' ) ) {
 	 * Take a string and make it all cleaned up for using in an action.
 	 *
 	 * @param  string $key     What date format we want to return. False for the timestamp.
+	 * @param  string $prefix  What to begin the name with. Optional.
+	 * @param  string $suffix  What to end the name with. Optional.
 	 *
-	 * @return string $timestamp  The timestamp in GMT.
+	 * @return string          The name used in the action.
 	 */
-	function lw_woo_gdpr_make_action_key( $key = '' ) {
+	function lw_woo_gdpr_make_action_key( $key = '', $prefix = 'lw_woo_gdpr_', $suffix = '_optin' ) {
 
 		// Bail if we don't have a key to check.
 		if ( empty( $key ) ) {
@@ -239,7 +241,7 @@ if ( ! function_exists( 'lw_woo_gdpr_make_action_key' ) ) {
 		$strip  = str_replace( array( '-', ' ' ), '_', $clean );
 
 		// Return it.
-		return 'lw_woo_gdpr_' . esc_attr( $strip ) . '_optin';
+		return esc_attr( $prefix ) . esc_attr( $strip ) . esc_attr( $suffix );
 	}
 
 	// End the function exists checks.

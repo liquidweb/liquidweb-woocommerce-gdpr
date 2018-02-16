@@ -144,7 +144,7 @@ class LW_Woo_GDPR_Checkout {
 		}
 
 		// Get my fields.
-		$fields = lw_woo_gdpr_optin_fields( true );
+		$fields = lw_woo_gdpr_optin_fields();
 
 		// Bail without my fields.
 		if ( empty( $fields ) ) {
@@ -152,22 +152,26 @@ class LW_Woo_GDPR_Checkout {
 		}
 
 		// Now loop my fields.
-		foreach ( $fields as $field ) {
+		foreach ( $fields as $id => $field ) {
 
 			// Set the meta key using the field name.
-			$meta_key   = 'woo_gdrp_' . esc_attr( $field );
+			$meta_key   = apply_filters( 'lw_woo_gdpr_optin_meta_name', 'woo-gdrp-' . esc_attr( $id ), $field );
 
-			// Set the value from the posted data, or false if it's missing.
-			$meta_value = in_array( $field, array_keys( $data ) ) ? esc_attr( $data[ $field ] ) : 0;
+			// Set the value from the posted data, or null if it's missing.
+			$meta_value = in_array( $id, array_keys( $data ) ) ? esc_attr( $data[ $id ] ) : null;
 
 			// And add it to the customer object.
 			$customer->update_meta_data( $meta_key, $meta_value );
 
-			// make my action key.
-			$action = lw_woo_gdpr_make_action_key( $field );
-
 			// Run an action for each individual opt-in.
-			do_action( 'lw_woo_gdpr_{$action}_optin', $field );
+			if ( ! empty( $field['action'] ) ) {
+
+				// Sanitize the action name.
+				$action = sanitize_text_field( $field['action'] );
+
+				// And do the action.
+				do_action( $action, $field );
+			}
 		}
 
 		// And just be done.

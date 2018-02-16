@@ -187,6 +187,82 @@ class LW_Woo_GDPR_Formatting {
 		return apply_filters( 'lw_woo_gdpr_format_reviews_export', $data, $reviews );
 	}
 
+	/**
+	 * Take the existing opt-in fields and create our full data array.
+	 *
+	 * @param  array $existing  The existing args saved by the user.
+	 *
+	 * @return array $data      The new data array.
+	 */
+	public static function format_current_optin_fields( $current = array() ) {
+
+		// Make sure we have stuff.
+		if ( empty( $current ) ) {
+			return false; // @@todo some error checking
+		}
+
+		// Set my empty.
+		$data   = array();
+
+		// Loop my existing items and reconstruct the array.
+		foreach ( $current as $id => $args ) {
+
+			// Sanitize the args in one fell swoop.
+			$setup  = array_filter( $args, 'sanitize_text_field' );
+
+			// Make sure we have an action.
+			$req    = ! empty( $args['required'] ) ? true : false;
+			$action = ! empty( $args['action'] ) ? esc_attr( $args['action'] ) : lw_woo_gdpr_make_action_key( $id );
+
+			// Build the data array.
+			$build  = array(
+				'id'        => $id,
+				'action'    => $action,
+				'title'     => esc_attr( $setup['title'] ),
+				'label'     => esc_attr( $setup['label'] ),
+				'required'  => $req,
+			);
+
+			// And add it to our data.
+			$data[ $id ] = $build;
+		}
+
+		// Return the whole thing, or cleaned up.
+		return ! empty( $data ) ? $data : false;
+	}
+
+	/**
+	 * Take a new opt-in field and create our full data array.
+	 *
+	 * @param  array $args  The args saved by the user.
+	 *
+	 * @return array         The new data array.
+	 */
+	public static function format_new_optin_field( $new_args = array() ) {
+
+		// Check the required title and label.
+		if ( empty( $new_args['title'] ) || empty( $new_args['label'] ) ) {
+			return false; // @@todo some error checking
+		}
+
+		// Sanitize the args in one fell swoop.
+		$setup  = array_filter( $new_args, 'sanitize_text_field' );
+
+		// Parse out the rest.
+		$req    = ! empty( $setup['required'] ) ? true : false;
+		$id     = sanitize_title_with_dashes( $setup['title'], '', 'save' );
+		$action = lw_woo_gdpr_make_action_key( $id );
+
+		// Return the constructed data array.
+		return array(
+			'id'        => $id,
+			'action'    => $action,
+			'title'     => esc_attr( $setup['title'] ),
+			'label'     => esc_attr( $setup['label'] ),
+			'required'  => $req,
+		);
+	}
+
 	// End our class.
 }
 
