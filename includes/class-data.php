@@ -37,7 +37,6 @@ class LW_Woo_GDPR_Data {
 			'meta_value'  => absint( $user_id ),
 			'order'       => 'ASC',
 			'orderby'     => 'meta_value_num',
-			'meta_key'    => '_date_completed',
 			'meta_query'  => array(
 				array(
 					'key'     => '_date_completed',

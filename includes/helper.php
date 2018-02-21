@@ -36,6 +36,14 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'The requested data export completed and is ready to download.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'success-removed' :
+			return __( 'The requested field has been removed.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'success-changeopts' :
+			return __( 'Your opt-in choices have been updated.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'success-general' :
 			return __( 'Your request has been completed.', 'liquidweb-woocommerce-gdpr' );
 			break;
@@ -49,7 +57,7 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			break;
 
 		case 'no_export_files' :
-			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
+			return __( 'There was no available data to be exported.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
 		case 'no_export_type_file' :

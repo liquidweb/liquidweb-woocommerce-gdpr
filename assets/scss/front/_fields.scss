@@ -1,5 +1,18 @@
 
+
+.lw-woo-gdpr-account-item-list {
+
+	list-style-type: none;
+	margin: 0 0 20px;
+	padding: 0;
+
+	li {}
+}
+
+
 .lw-woo-gdpr-data-options {
+
+	margin: 0 0 20px;
 
 	.lw-woo-gdpr-data-option {
 		display: block;
@@ -66,6 +79,10 @@
 			}
 		}
 	}
+}
+
+.lw-woo-gdpr-section-description {
+	font-style: italic;
 }
 
 

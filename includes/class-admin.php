@@ -18,7 +18,7 @@ class LW_Woo_GDPR_Admin {
 	public static $menu_slug = LW_WOO_GDPR_MENU_BASE;
 	public static $hook_slug = 'woocommerce_page_' . LW_WOO_GDPR_MENU_BASE;
 	public static $woo_slug  = 'woocommerce_page_wc-settings';
-	public static $woo_tab   = 'gdpr_optins';
+	public static $woo_tab   = LW_WOO_GDPR_TAB_BASE;
 
 	/**
 	 * Call our hooks.

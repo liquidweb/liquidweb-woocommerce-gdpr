@@ -52,7 +52,8 @@ class LW_Woo_GDPR_Export {
 		$user_id    = absint( $_POST['lw_woo_gdpr_data_export_user'] );
 
 		// Fetch any existing download files.
-		$downloads  = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
+		$existing   = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
+		$downloads  = ! empty( $existing ) ? $existing : array();
 
 		// Sanitize all the types we requested.
 		$datatypes  = array_map( 'sanitize_text_field', $_POST['lw_woo_gdpr_export_option'] );

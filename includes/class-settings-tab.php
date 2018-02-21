@@ -19,11 +19,73 @@ class LW_Woo_GDPR_SettingsTab {
 	 * @return void
 	 */
 	public function init() {
+		add_action( 'admin_init',                                       array( $this, 'remove_single_field'         )           );
+		add_action( 'admin_notices',                                    array( $this, 'process_remove_notices'      )           );
 		add_filter( 'woocommerce_settings_tabs_array',                  array( $this, 'add_settings_tab'            ),  50      );
 		add_action( 'woocommerce_settings_tabs_gdpr_optins',            array( $this, 'settings_tab'                )           );
 		add_action( 'woocommerce_update_options_gdpr_optins',           array( $this, 'update_settings'             )           );
 		add_action( 'woocommerce_admin_field_repeating_setup',          array( $this, 'output_repeating_setup'      ),  10, 1   );
 		add_action( 'woocommerce_admin_field_repeating_group',          array( $this, 'output_repeating_group'      ),  10, 1   );
+	}
+
+	/**
+	 * Handle removing a single field.
+	 *
+	 */
+	public function remove_single_field() {
+
+		// First check for the single delete.
+		if ( empty( $_GET['gdpr-single-delete'] ) || empty( $_GET['gdpr-field-id'] ) ) {
+			return;
+		}
+
+		// @@todo  do the nonce check.
+
+		// Go ahead and remove it.
+		lw_woo_gdpr()->update_saved_optin_fields( 0, esc_attr( $_GET['gdpr-field-id'] ) );
+
+		// Now set my redirect link.
+		$link   = add_query_arg( array( 'gdpr-success' => 1, 'result' => 'gdpr-single-delete' ), lw_woo_gdpr()->get_settings_tab_link() );
+
+		// Do our return redirect.
+		wp_redirect( $link );
+		exit;
+	}
+
+	/**
+	 * Set up the admin notices.
+	 *
+	 * @return mixed
+	 */
+	public function process_remove_notices() {
+
+		// Make sure we have the page we want.
+		if ( empty( $_GET['page'] ) || 'wc-settings' !== esc_attr( $_GET['page'] ) ) {
+			return;
+		}
+
+		// Make sure we have the tab we want.
+		if ( empty( $_GET['tab'] ) || LW_WOO_GDPR_TAB_BASE !== esc_attr( $_GET['tab'] ) ) {
+			return;
+		}
+
+		// Handle the success notice first.
+		if ( ! empty( $_GET['result'] ) && 'gdpr-single-delete' === esc_attr( $_GET['result'] ) ) {
+
+			// Get my message text.
+			$msgtxt = lw_woo_gdpr_notice_text( 'success-removed' );
+
+			// Output the message along with the dismissable.
+			echo '<div class="notice notice-success is-dismissible lw-woo-gdpr-message">';
+				echo '<p>' . wp_kses_post( $msgtxt ) . '</p>';
+			echo '</div>';
+
+			// And be done.
+			return;
+		}
+
+		// And be done.
+		return;
 	}
 
 	/**
@@ -36,8 +98,8 @@ class LW_Woo_GDPR_SettingsTab {
 	public function add_settings_tab( $tabs ) {
 
 		// Confirm we don't already have the tab.
-		if ( ! isset( $tabs['gdpr_optins'] ) ) {
-			$tabs['gdpr_optins'] = __( 'GDPR Opt-Ins', 'liquidweb-woocommerce-gdpr' );
+		if ( ! isset( $tabs[ LW_WOO_GDPR_TAB_BASE ] ) ) {
+			$tabs[ LW_WOO_GDPR_TAB_BASE ] = __( 'GDPR Opt-Ins', 'liquidweb-woocommerce-gdpr' );
 		}
 
 		// And return the entire array.
@@ -92,7 +154,7 @@ class LW_Woo_GDPR_SettingsTab {
 		}
 
 		// Update our option. // no idea how to use woocommerce_update_options();
-		update_option( 'lw_woo_gdpr_optin_fields', $fields );
+		lw_woo_gdpr()->update_saved_optin_fields( $fields, null );
 
 		// And be done.
 		return;
@@ -126,101 +188,6 @@ class LW_Woo_GDPR_SettingsTab {
 
 		// Return our set of fields with a filter.
 		return apply_filters( 'lw_woo_gdpr_optin_settings_array', $setup );
-	}
-
-	/**
-	 * Output our custom repeating field.
-	 *
-	 * @param  array $args  The field args we set up.
-	 *
-	 * @return HTML
-	 */
-	public function output_repeating_group( $args ){
-
-		// Fetch my existing fields.
-		if ( false === $fields = lw_woo_gdpr_optin_fields() ) {
-			return;
-		}
-
-		// Wrap my entire table.
-		echo '<table id="lw-woo-gdpr-fields-table" class="lw-woo-gdpr-fields-table-wrap lw-woo-gdpr-saved-table-wrap wp-list-table widefat fixed striped">';
-
-		// Set up the table header.
-		echo '<thead>';
-			echo '<tr>';
-				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-required lw-woo-gdpr-field-header-required" scope="col">';
-					echo '<i title="' . __( 'Required', 'liquidweb-woocommerce-gdpr' ) . '" class="dashicons dashicons-post-status"></i>';
-					echo '<span class="screen-reader-text">' . __( 'Required', 'liquidweb-woocommerce-gdpr' ) . '</span>';
-				echo '</th>';
-				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-title lw-woo-gdpr-field-header-title" scope="col">' . __( 'Title', 'liquidweb-woocommerce-gdpr' ) . '</th>';
-				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-label lw-woo-gdpr-field-header-label" scope="col">' . __( 'Label', 'liquidweb-woocommerce-gdpr' ) . '</th>';
-				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-hook lw-woo-gdpr-field-header-hook" scope="col">' . __( 'Hook', 'liquidweb-woocommerce-gdpr' ) . '</th>';
-				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-trigger lw-woo-gdpr-field-header-trigger" scope="col">&nbsp;</th>';
-			echo '</tr>';
-		echo '</thead>';
-
-		// Set the table body.
-		echo '<tbody>';
-
-		// Loop my fields and make a block of each one.
-		foreach ( $fields as $field ) {
-
-			// Create my name field and confirm the action name.
-			$name   = 'gdpr-optin-current[' . esc_attr( $field['id'] ) . ']';
-			$check  = ! empty( $field['required'] ) ? true : false;
-			$action = ! empty( $field['action'] ) ? $field['action'] : lw_woo_gdpr_make_action_key( $field['id'] );
-
-			// Set our delete link.
-			$delete = '';
-
-			// Set up the single div.
-			echo '<tr id="lw-woo-gdpr-field-' . esc_attr( $field['id'] ) . '" class="lw-woo-gdpr-field-single">';
-
-				// Output the required checkbox.
-				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-required">';
-					echo '<input type="checkbox" class="lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[required]" value="1" ' . checked( $check, 1, false ) . '>';
-				echo '</td>';
-
-				// Output the title field.
-				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-title">';
-					echo '<input type="text" class="widefat lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[title]" value="' . esc_attr( $field['title'] ) . '">';
-				echo '</td>';
-
-				// Output the label field.
-				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-label">';
-					echo '<input type="text" class="widefat lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[label]" value="' . esc_attr( $field['label'] ) . '">';
-				echo '</td>';
-
-				// Output the hook name field.
-				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-hook">';
-					echo '<input type="text" class="widefat code lw-woo-gdpr-field-input" readonly="readonly" value="' . esc_attr( $action ) . '">';
-					echo '<input type="hidden" name="' . esc_attr( $name ) . '[action]" value="' . esc_attr( $action ) . '">';
-				echo '</td>';
-
-				// Output the trigger field.
-				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-trigger">';
-
-					// Handle the trash trigger.
-					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-trash" href="">';
-						echo '<i class="lw-woo-gdpr-trigger-icon dashicons dashicons-trash"></i>';
-					echo '</a>';
-
-					// Handle the sort trigger.
-					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-sort hide-if-no-js" href="">';
-						echo '<i class="lw-woo-gdpr-trigger-icon dashicons dashicons-sort"></i>';
-					echo '</a>';
-
-				echo '</td>';
-
-			// Close the single div.
-			echo '</tr>';
-		}
-
-		// Close the table body.
-		echo '</tbody>';
-
-		// Close my table.
-		echo '</table>';
 	}
 
 	/**
@@ -325,6 +292,103 @@ class LW_Woo_GDPR_SettingsTab {
 
 		// Return it.
 		return $block;
+	}
+
+	/**
+	 * Output our custom repeating field.
+	 *
+	 * @param  array $args  The field args we set up.
+	 *
+	 * @return HTML
+	 */
+	public function output_repeating_group( $args ){
+
+		// Fetch my existing fields.
+		if ( false === $fields = lw_woo_gdpr_optin_fields() ) {
+			return;
+		}
+
+		// Wrap my entire table.
+		echo '<table id="lw-woo-gdpr-fields-table" class="lw-woo-gdpr-fields-table-wrap lw-woo-gdpr-saved-table-wrap wp-list-table widefat fixed striped">';
+
+		// Set up the table header.
+		echo '<thead>';
+			echo '<tr>';
+				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-required lw-woo-gdpr-field-header-required" scope="col">';
+					echo '<i title="' . __( 'Required', 'liquidweb-woocommerce-gdpr' ) . '" class="dashicons dashicons-post-status"></i>';
+					echo '<span class="screen-reader-text">' . __( 'Required', 'liquidweb-woocommerce-gdpr' ) . '</span>';
+				echo '</th>';
+				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-title lw-woo-gdpr-field-header-title" scope="col">' . __( 'Title', 'liquidweb-woocommerce-gdpr' ) . '</th>';
+				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-label lw-woo-gdpr-field-header-label" scope="col">' . __( 'Label', 'liquidweb-woocommerce-gdpr' ) . '</th>';
+				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-hook lw-woo-gdpr-field-header-hook" scope="col">' . __( 'Hook', 'liquidweb-woocommerce-gdpr' ) . '</th>';
+				echo '<th class="lw-woo-gdpr-field-header lw-woo-gdpr-field-trigger lw-woo-gdpr-field-header-trigger" scope="col">&nbsp;</th>';
+			echo '</tr>';
+		echo '</thead>';
+
+		// Set the table body.
+		echo '<tbody>';
+
+		// Loop my fields and make a block of each one.
+		foreach ( $fields as $field ) {
+
+			// Create my name field and confirm the action name.
+			$name   = 'gdpr-optin-current[' . esc_attr( $field['id'] ) . ']';
+			$check  = ! empty( $field['required'] ) ? true : false;
+			$action = ! empty( $field['action'] ) ? $field['action'] : lw_woo_gdpr_make_action_key( $field['id'] );
+
+			// Set our delete link.
+			$d_nonc = wp_create_nonce( 'lw_woo_optin_single_' . esc_attr( $field['id'] )  );
+			$d_args = array( 'gdpr-single-delete' => 1, 'gdpr-field-id' => esc_attr( $field['id'] ), 'nonce' => $d_nonc );
+			$delete = add_query_arg( $d_args, lw_woo_gdpr()->get_settings_tab_link() );
+
+			// Set up the single div.
+			echo '<tr id="lw-woo-gdpr-field-' . esc_attr( $field['id'] ) . '" class="lw-woo-gdpr-field-single">';
+
+				// Output the required checkbox.
+				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-required">';
+					echo '<input type="checkbox" class="lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[required]" value="1" ' . checked( $check, 1, false ) . '>';
+				echo '</td>';
+
+				// Output the title field.
+				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-title">';
+					echo '<input type="text" class="widefat lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[title]" value="' . esc_attr( $field['title'] ) . '">';
+				echo '</td>';
+
+				// Output the label field.
+				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-label">';
+					echo '<input type="text" class="widefat lw-woo-gdpr-field-input" name="' . esc_attr( $name ) . '[label]" value="' . esc_attr( $field['label'] ) . '">';
+				echo '</td>';
+
+				// Output the hook name field.
+				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-hook">';
+					echo '<input type="text" class="widefat code lw-woo-gdpr-field-input" readonly="readonly" value="' . esc_attr( $action ) . '">';
+					echo '<input type="hidden" name="' . esc_attr( $name ) . '[action]" value="' . esc_attr( $action ) . '">';
+				echo '</td>';
+
+				// Output the trigger field.
+				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-trigger">';
+
+					// Handle the trash trigger.
+					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-trash" href="' . esc_url( $delete ) . '">';
+						echo '<i class="lw-woo-gdpr-trigger-icon dashicons dashicons-trash"></i>';
+					echo '</a>';
+
+					// Handle the sort trigger.
+					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-sort hide-if-no-js" href="">';
+						echo '<i class="lw-woo-gdpr-trigger-icon dashicons dashicons-sort"></i>';
+					echo '</a>';
+
+				echo '</td>';
+
+			// Close the single div.
+			echo '</tr>';
+		}
+
+		// Close the table body.
+		echo '</tbody>';
+
+		// Close my table.
+		echo '</table>';
 	}
 
 	// End our class.

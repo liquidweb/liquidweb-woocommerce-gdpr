@@ -154,6 +154,11 @@ final class LW_Woo_GDPR {
 			define( 'LW_WOO_GDPR_MENU_BASE', 'pending-gdpr-requests' );
 		}
 
+		// Set our tab base slug constant.
+		if ( ! defined( 'LW_WOO_GDPR_TAB_BASE' ) ) {
+			define( 'LW_WOO_GDPR_TAB_BASE', 'gdpr_optins' );
+		}
+
 		// Set our front menu endpoint constant.
 		if ( ! defined( 'LW_WOO_GDPR_FRONT_VAR' ) ) {
 			define( 'LW_WOO_GDPR_FRONT_VAR', 'privacy-data' );
@@ -211,6 +216,15 @@ final class LW_Woo_GDPR {
 	 */
 	public static function get_admin_menu_link() {
 		return ! function_exists( 'menu_page_url' ) ? admin_url( 'admin.php?page=' . LW_WOO_GDPR_MENU_BASE ) : menu_page_url( LW_WOO_GDPR_MENU_BASE, false );
+	}
+
+	/**
+	 * Return our base link, with function fallbacks.
+	 *
+	 * @return string
+	 */
+	public static function get_settings_tab_link() {
+		return ! function_exists( 'menu_page_url' ) ? admin_url( 'admin.php?page=wc-settings&tab=' . LW_WOO_GDPR_TAB_BASE ) : add_query_arg( array( 'tab' => LW_WOO_GDPR_TAB_BASE ), menu_page_url( 'wc-settings', false ) );
 	}
 
 	/**
@@ -598,11 +612,98 @@ final class LW_Woo_GDPR {
 		}
 
 		// Now set my redirect link.
-		$link   = lw_woo_gdpr()->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'delete' ) );
+		$link   = $this->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'delete' ) );
 
 		// Do the redirect.
 		wp_redirect( $link );
 		exit;
+	}
+
+	/**
+	 * Manage saving the fields created.
+	 *
+	 * @param  array  $fields  The field data we are going to save.
+	 * @param  string $remove  A field item to remove.
+	 *
+	 * @return void
+	 */
+	public function update_saved_optin_fields( $fields = array(), $remove = '' ) {
+
+		// Make sure we have everything required.
+		if ( empty( $fields ) && empty( $remove ) ) {
+			return false;
+		}
+
+		// Make sure we have fields to begin with.
+		$fields = ! empty( $fields ) ? $fields : get_option( 'lw_woo_gdpr_optin_fields', array() );
+
+		// Check for the remove first.
+		if ( ! empty( $remove ) ) {
+			unset( $fields[ $remove ] );
+		}
+
+		// And update our data.
+		update_option( 'lw_woo_gdpr_optin_fields', $fields );
+
+		// Return that we've done it.
+		return true;
+	}
+
+	/**
+	 * Manage saving the opt-in choices for a user.
+	 *
+	 * @param  integer $user_id   The user we are going to look up if no customer object is there.
+	 * @param  object  $customer  The customer object.
+	 * @param  array   $data      The field data to use in updating.
+	 *
+	 * @return void
+	 */
+	public function update_user_optin_fields( $user_id = 0, $customer, $data = array() ) {
+
+		// Make sure we have everything required.
+		if ( empty( $user_id ) && empty( $customer ) ) {
+			return false;
+		}
+
+		// Get my fields.
+		$fields = lw_woo_gdpr_optin_fields();
+
+		// Bail without my fields.
+		if ( empty( $fields ) ) {
+			return false;
+		}
+
+		// Now loop my fields.
+		foreach ( $fields as $id => $field ) {
+
+			// Set the meta key using the field name.
+			$meta_key   = 'woo_gdrp_' . esc_attr( $id );
+
+			// Set the value from the posted data, or null if it's missing.
+			$meta_value = ! empty( $data ) && in_array( $id, array_keys( $data ) ) ? 1 : 0;
+
+			// wp_die( 'key: ' . $meta_key . ' ||  value: ' . $meta_value );
+
+			// And add it to the customer object.
+			if ( ! empty( $customer ) && is_object( $customer ) ) {
+				$customer->update_meta_data( $meta_key, $meta_value );
+			} else {
+				update_user_meta( $user_id, $meta_key, $meta_value );
+			}
+
+			// Run an action for each individual opt-in.
+			if ( ! empty( $field['action'] ) ) {
+
+				// Sanitize the action name.
+				$action = sanitize_text_field( $field['action'] );
+
+				// And do the action.
+				do_action( $action, $field );
+			}
+		}
+
+		// And just be done.
+		return true;
 	}
 
 	/**
