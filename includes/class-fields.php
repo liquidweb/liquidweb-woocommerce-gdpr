@@ -102,7 +102,7 @@ class LW_Woo_GDPR_Fields {
 		$field  = '';
 
 		// Set up the single div.
-		$field .= '<tr id="lw-woo-gdpr-field-' . esc_attr( $args['id'] ) . '" class="lw-woo-gdpr-field-single">';
+		$field .= '<tr data-key="' . esc_attr( $args['id'] ) . '" id="lw-woo-gdpr-field-' . esc_attr( $args['id'] ) . '" class="lw-woo-gdpr-field-single">';
 
 			// Output the required checkbox.
 			$field .= '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-required">';

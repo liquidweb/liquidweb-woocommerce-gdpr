@@ -21,6 +21,7 @@ class LW_Woo_GDPR_Ajax {
 	public function init() {
 		add_action( 'wp_ajax_lw_woo_add_new_optin_row',     array( $this, 'add_new_optin_row'           )           );
 		add_action( 'wp_ajax_lw_woo_delete_single_row',     array( $this, 'delete_single_row'           )           );
+		add_action( 'wp_ajax_lw_woo_update_sorted_rows',    array( $this, 'update_sorted_rows'          )           );
 	}
 
 	/**
@@ -173,6 +174,72 @@ class LW_Woo_GDPR_Ajax {
 
 		// Made it to the end without knowing what to do.
 		self::send_error( 'unknown' );
+	}
+
+	/**
+	 * Update our stored away with the new sort.
+	 *
+	 * @return mixed
+	 */
+	public function update_sorted_rows() {
+
+		// Only run this on the admin side.
+		if ( ! is_admin() ) {
+			die();
+		}
+
+		// Bail if we are doing a REST API request.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		// Bail out if running an autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Bail out if running a cron, unless we've skipped that.
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_update_sorted_rows' !== sanitize_text_field( $_POST['action'] ) ) {
+			return;
+		}
+
+		// Check to see if our sorted data was provided.
+		if ( empty( $_POST['sorted'] ) ) {
+			return;
+		}
+
+		// Fetch my existing fields.
+		if ( false === $current = lw_woo_gdpr_optin_fields() ) {
+			return;
+		}
+
+		// Filter my fields.
+		$fields = array_filter( $_POST['sorted'], 'sanitize_text_field' );
+
+		// Set my new array variable.
+		$update = array();
+
+		// Loop my field IDs to reconstruct the order.
+		foreach ( $fields as $field_id ) {
+			$update[ $field_id ] = $current[ $field_id ];
+		}
+
+		// Update our option. // no idea how to use woocommerce_update_options();
+		lw_woo_gdpr()->update_saved_optin_fields( $update, null );
+
+		// Build our return.
+		$return = array(
+			'errcode' => null,
+			'message' => lw_woo_gdpr_notice_text( 'success' ),
+		);
+
+		// And handle my JSON return.
+		wp_send_json_success( $return );
 	}
 
 	/**

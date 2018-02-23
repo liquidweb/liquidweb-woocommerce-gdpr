@@ -32,6 +32,10 @@ jQuery(document).ready( function($) {
 	/**
 	 * Set some vars for later
 	 */
+	var saveTable = 'table.lw-woo-gdpr-add-new-table-wrap';
+	var sortTable = 'table.lw-woo-gdpr-saved-table-wrap';
+	var sortBody = 'table.lw-woo-gdpr-saved-table-wrap tbody';
+	var sortUpdate;
 	var fieldBlock;
 	var fieldID;
 	var fieldNonce;
@@ -42,9 +46,35 @@ jQuery(document).ready( function($) {
 	var newNonce;
 
 	/**
+	 * Set up the sortable table rows.
+	 */
+	$( sortTable ).divExists( function() {
+
+		// Make our table sortable.
+		$( this ).find( 'tbody' ).sortable({
+			handle: '.lw-woo-gdpr-trigger-icon',
+			update: function( event, ui ) {
+
+				// Fetch the updated sort order.
+				sortUpdate = $( sortBody ).sortable( 'toArray', { attribute: 'data-key' } );
+
+				// Build the data structure for the call.
+				var data = {
+					action: 'lw_woo_update_sorted_rows',
+					sorted: sortUpdate
+				};
+
+				// Send the post request, we don't actually care about the response.
+				jQuery.post( ajaxurl, data );
+			}
+		});
+
+	});
+
+	/**
 	 * Add a new item into the table.
 	 */
-	$( 'table.lw-woo-gdpr-add-new-table-wrap' ).on( 'click', 'input.lw-woo-gdpr-add-new', function( event ) {
+	$( saveTable ).on( 'click', 'input.lw-woo-gdpr-add-new', function( event ) {
 
 		// Stop the actual click.
 		event.preventDefault();
@@ -88,6 +118,9 @@ jQuery(document).ready( function($) {
 
 				// Add the row itself.
 				$( 'table#lw-woo-gdpr-fields-table tr:last' ).after( response.data.markup );
+
+				// Refresh the sortable table.
+				$( sortTable ).sortable( 'refreshPositions' );
 			}
 		});
 	});
@@ -95,7 +128,7 @@ jQuery(document).ready( function($) {
 	/**
 	 * Handle the individual item deletion.
 	 */
-	$( 'table.lw-woo-gdpr-saved-table-wrap' ).on( 'click', 'a.lw-woo-gdpr-field-trigger-trash', function( event ) {
+	$( sortTable ).on( 'click', 'a.lw-woo-gdpr-field-trigger-trash', function( event ) {
 
 		// Stop the actual click.
 		event.preventDefault();
@@ -140,21 +173,14 @@ jQuery(document).ready( function($) {
 
 			// No error, so remove the field
 			if ( response.success === true || response.success === 'true' ) {
-				$( 'table.lw-woo-gdpr-fields-table-wrap' ).find( fieldBlock ).fadeOut().remove();
+
+				// Remove the field.
+				$( sortTable ).find( fieldBlock ).fadeOut().remove();
+
+				// Refresh the sortable table.
+				$( sortBody ).sortable( 'refreshPositions' );
 			}
 		});
-	});
-
-	/**
-	 * Set up the sortable table rows.
-	 */
-	$( 'table.lw-woo-gdpr-saved-table-wrap' ).divExists( function() {
-
-		// Make our table sortable.
-		$( this ).find( 'tbody' ).sortable({
-			handle: '.lw-woo-gdpr-trigger-icon'
-		});
-
 	});
 
 //********************************************************

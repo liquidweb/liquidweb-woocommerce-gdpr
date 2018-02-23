@@ -250,9 +250,9 @@ class LW_Woo_GDPR_Formatting {
 		$filter = array_filter( $new_args, 'sanitize_text_field' );
 
 		// Parse out the rest.
-		$req    = ! empty( $filter['required'] ) ? true : false;
 		$id     = sanitize_title_with_dashes( $filter['title'], '', 'save' );
 		$action = lw_woo_gdpr_make_action_key( $id );
+		$req    = ! empty( $filter['required'] ) ? true : false;
 
 		// Build the constructed data array.
 		$setup  = array(
