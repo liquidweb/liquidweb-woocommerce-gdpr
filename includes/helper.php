@@ -45,6 +45,7 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			break;
 
 		case 'success-general' :
+		case 'success' :
 			return __( 'Your request has been completed.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
@@ -80,8 +81,28 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'No users were selected.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'missing-nonce' :
+			return __( 'The required nonce was missing.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'bad-nonce' :
+			return __( 'The required nonce was invalid.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'invalid-nonce' :
 			return __( 'The required nonce was missing or invalid.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'missing-title' :
+			return __( 'The title field is required.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'missing-label' :
+			return __( 'The label field is required.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'bad-field-id' :
+			return __( 'The ID of the field could not be determined.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
 		case 'unknown' :

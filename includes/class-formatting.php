@@ -234,11 +234,12 @@ class LW_Woo_GDPR_Formatting {
 	/**
 	 * Take a new opt-in field and create our full data array.
 	 *
-	 * @param  array $args  The args saved by the user.
+	 * @param  array   $args   The args saved by the user.
+	 * @param  boolean $merge  Whether to merge the existing fields.
 	 *
 	 * @return array         The new data array.
 	 */
-	public static function format_new_optin_field( $new_args = array() ) {
+	public static function format_new_optin_field( $new_args = array(), $merge = false ) {
 
 		// Check the required title and label.
 		if ( empty( $new_args['title'] ) || empty( $new_args['label'] ) ) {
@@ -246,21 +247,35 @@ class LW_Woo_GDPR_Formatting {
 		}
 
 		// Sanitize the args in one fell swoop.
-		$setup  = array_filter( $new_args, 'sanitize_text_field' );
+		$filter = array_filter( $new_args, 'sanitize_text_field' );
 
 		// Parse out the rest.
-		$req    = ! empty( $setup['required'] ) ? true : false;
-		$id     = sanitize_title_with_dashes( $setup['title'], '', 'save' );
+		$req    = ! empty( $filter['required'] ) ? true : false;
+		$id     = sanitize_title_with_dashes( $filter['title'], '', 'save' );
 		$action = lw_woo_gdpr_make_action_key( $id );
 
-		// Return the constructed data array.
-		return array(
+		// Build the constructed data array.
+		$setup  = array(
 			'id'        => $id,
 			'action'    => $action,
-			'title'     => esc_attr( $setup['title'] ),
-			'label'     => esc_attr( $setup['label'] ),
+			'title'     => esc_attr( $filter['title'] ),
+			'label'     => esc_attr( $filter['label'] ),
 			'required'  => $req,
 		);
+
+		// If we didn't request the merge, return our setup.
+		if ( empty( $merge ) ) {
+			return $setup;
+		}
+
+		// Set up the new item.
+		$update = array( $id => $setup );
+
+		// Pull our saved items.
+		$saved  = get_option( 'lw_woo_gdpr_optin_fields', array() );
+
+		// And return the merged array.
+		return wp_parse_args( $update, $saved );
 	}
 
 	// End our class.

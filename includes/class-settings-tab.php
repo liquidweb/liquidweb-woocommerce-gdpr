@@ -226,6 +226,8 @@ class LW_Woo_GDPR_SettingsTab {
 
 			// And a header.
 			$block .= '<thead>';
+
+				// Open up the row.
 				$block .= '<tr>';
 
 					// Add the required checkbox.
@@ -254,26 +256,32 @@ class LW_Woo_GDPR_SettingsTab {
 
 			// And a body.
 			$block .= '<tbody>';
-				$block .= '<tr>';
+
+				// Open the row.
+				$block .= '<tr class="lw-woo-gdpr-new-fields-row">';
 
 					// Add the required checkbox.
-					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-required">';
-						$block .= '<input type="checkbox" class="lw-woo-gdpr-field-input" name="gdpr-optin-new[required]" value="1">';
+					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-checkbox-input lw-woo-gdpr-new-field-required">';
+						$block .= '<input type="checkbox" id="lw-woo-gdpr-new-required" class="lw-woo-gdpr-field-input" name="gdpr-optin-new[required]" value="1">';
 					$block .= '</td>';
 
 					// Add the title field.
-					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-title">';
-						$block .= '<input type="text" placeholder="' . __( 'Field Title', 'liquidweb-woocommerce-gdpr' ) . '" class="widefat lw-woo-gdpr-field-input" name="gdpr-optin-new[title]" value="">';
+					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-text-input lw-woo-gdpr-new-field-title">';
+						$block .= '<input type="text" id="lw-woo-gdpr-new-title" placeholder="' . __( 'Field Title', 'liquidweb-woocommerce-gdpr' ) . '" class="widefat lw-woo-gdpr-field-input" name="gdpr-optin-new[title]" value="">';
 					$block .= '</td>';
 
 					// Add the label field.
-					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-label">';
-						$block .= '<input type="text" placeholder="' . __( 'Field Label', 'liquidweb-woocommerce-gdpr' ) . '" class="widefat lw-woo-gdpr-field-input" name="gdpr-optin-new[label]" value="">';
+					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-text-input lw-woo-gdpr-new-field-label">';
+						$block .= '<input type="text" id="lw-woo-gdpr-new-label" placeholder="' . __( 'Field Label', 'liquidweb-woocommerce-gdpr' ) . '" class="widefat lw-woo-gdpr-field-input" name="gdpr-optin-new[label]" value="">';
 					$block .= '</td>';
 
 					// Add the button setup itself.
 					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-add-button">';
 						$block .= '<input type="submit" class="button button-secondary button-small lw-woo-gdpr-add-new" value="' . esc_html__( 'Add New Item', 'liquidweb-woocommerce-gdpr' ) . '">';
+
+						// Include a nonce.
+						$block .= wp_nonce_field( 'lw_woo_gdpr_new_action', 'lw_woo_gdpr_new_nonce', true, false );
+
 					$block .= '</td>';
 
 				// Close the row.
@@ -331,6 +339,9 @@ class LW_Woo_GDPR_SettingsTab {
 		// Loop my fields and make a block of each one.
 		foreach ( $fields as $field ) {
 
+			echo LW_Woo_GDPR_Fields::table_row( $field );
+
+			/*
 			// Create my name field and confirm the action name.
 			$name   = 'gdpr-optin-current[' . esc_attr( $field['id'] ) . ']';
 			$check  = ! empty( $field['required'] ) ? true : false;
@@ -340,6 +351,9 @@ class LW_Woo_GDPR_SettingsTab {
 			$d_nonc = wp_create_nonce( 'lw_woo_optin_single_' . esc_attr( $field['id'] )  );
 			$d_args = array( 'gdpr-single-delete' => 1, 'gdpr-field-id' => esc_attr( $field['id'] ), 'nonce' => $d_nonc );
 			$delete = add_query_arg( $d_args, lw_woo_gdpr()->get_settings_tab_link() );
+
+			// Set the data attributes for the Ajax call.
+			$d_atrb = ' data-field-id="' . esc_attr( $field['id'] ) . '" data-nonce="' . $d_nonc . '"';
 
 			// Set up the single div.
 			echo '<tr id="lw-woo-gdpr-field-' . esc_attr( $field['id'] ) . '" class="lw-woo-gdpr-field-single">';
@@ -369,7 +383,7 @@ class LW_Woo_GDPR_SettingsTab {
 				echo '<td class="lw-woo-gdpr-field-item lw-woo-gdpr-field-trigger">';
 
 					// Handle the trash trigger.
-					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-trash" href="' . esc_url( $delete ) . '">';
+					echo '<a class="lw-woo-gdpr-field-trigger-item lw-woo-gdpr-field-trigger-trash" href="' . esc_url( $delete ) . '" ' . $d_atrb . ' >';
 						echo '<i class="lw-woo-gdpr-trigger-icon dashicons dashicons-trash"></i>';
 					echo '</a>';
 
@@ -382,6 +396,7 @@ class LW_Woo_GDPR_SettingsTab {
 
 			// Close the single div.
 			echo '</tr>';
+			*/
 		}
 
 		// Close the table body.
