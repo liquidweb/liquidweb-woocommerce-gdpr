@@ -19,9 +19,71 @@ class LW_Woo_GDPR_Ajax {
 	 * @return void
 	 */
 	public function init() {
+		add_action( 'wp_ajax_lw_woo_update_user_optins',    array( $this, 'update_user_optins'          )           );
 		add_action( 'wp_ajax_lw_woo_add_new_optin_row',     array( $this, 'add_new_optin_row'           )           );
 		add_action( 'wp_ajax_lw_woo_delete_single_row',     array( $this, 'delete_single_row'           )           );
 		add_action( 'wp_ajax_lw_woo_update_sorted_rows',    array( $this, 'update_sorted_rows'          )           );
+	}
+
+	/**
+	 * Update our user opt-in values.
+	 *
+	 * @return mixed
+	 */
+	public function update_user_optins() {
+
+		// Bail if we are doing a REST API request.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		// Bail out if running an autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Bail out if running a cron, unless we've skipped that.
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_update_user_optins' !== sanitize_text_field( $_POST['action'] ) ) {
+			return false;
+		}
+
+		// Check to see if our nonce was provided.
+		if ( empty( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'lw_woo_gdpr_changeopt_action' ) ) {
+			self::send_error( 'invalid-nonce' );
+		}
+
+		// Check for the user ID field.
+		if ( empty( $_POST['user_id'] ) ) {
+			self::send_error( 'missing-user-id' );
+		}
+
+		// Determine if we have opt-in choices.
+		$items  = ! empty( $_POST['optins'] ) ? array_filter( (array) $_POST['optins'], 'sanitize_text_field' ) : array();
+
+		// Run through the update.
+		if ( false !== $update = lw_woo_gdpr()->update_user_optin_fields( absint( $_POST['user_id'] ), null, $items, false ) ) {
+
+			// Grab our fields.
+			$fields = lw_woo_gdpr_optin_fields();
+
+			// Build our return.
+			$return = array(
+				'errcode' => null,
+				'markup'  => LW_Woo_GDPR_Fields::get_optin_status_list( $fields, absint( $_POST['user_id'] ) ),
+				'message' => lw_woo_gdpr_notice_text( 'success-changeopts' ),
+			);
+
+			// And handle my JSON return.
+			wp_send_json_success( $return );
+		}
+
+		// Made it to the end without knowing what to do.
+		self::send_error( 'unknown' );
 	}
 
 	/**

@@ -220,7 +220,7 @@ class LW_Woo_GDPR_Account {
 	 *
 	 * @return HTML
 	 */
-	public static function display_optin_statuses( $user_id = 0 ) {
+	public static function display_optin_statuses( $user_id = 0, $echo = false ) {
 
 		// Get my fields.
 		$fields = lw_woo_gdpr_optin_fields();
@@ -248,36 +248,8 @@ class LW_Woo_GDPR_Account {
 				// Open up our list.
 				$build .= '<ul class="lw-woo-gdpr-account-item-list lw-woo-gdpr-optin-list">';
 
-				// Loop my fields to display.
-				foreach ( $fields as $key => $field ) {
-
-					// Check the status.
-					$status = get_user_meta( $user_id, 'woo_gdrp_' . $key, true );
-					$check  = ! empty( $status ) ? true : false;
-
-					// Set the text accordingly.
-					$text   = ! empty( $status ) ? sprintf( __( 'You have opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) ) : sprintf( __( 'You have not opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) );
-
-					// Set new field args.
-					$new_field_args = array(
-						'name'      => 'lw_woo_gdpr_changeopt_items[' . esc_attr( $field['id'] ) . ']',
-						'label'     => wp_kses_post( $text ),
-						'required'  => false,
-						'checked'   => $check,
-					);
-
-					// Merge my new args.
-					$field  = wp_parse_args( $new_field_args, $field );
-
-					// Open up our list item.
-					$build .= '<li class="lw-woo-gdpr-data-option lw-woo-gdpr-optin-list-item">';
-
-						// Include the actual checkbox.
-						$build .= LW_Woo_GDPR_Fields::checkbox_field( $field );
-
-					// Close the list item.
-					$build .= '</li>';
-				}
+					// Grab the list items.
+					$build .= LW_Woo_GDPR_Fields::get_optin_status_list( $fields, $user_id );
 
 				// Close the list.
 				$build .= '</ul>';
@@ -291,7 +263,7 @@ class LW_Woo_GDPR_Account {
 					// The button / action combo.
 					$build .= '<input class="woocommerce-Button button lw-woo-gdpr-optin-list-submit" name="lw_woo_gdpr_changeopt" value="' . __( 'Update Your Opt-Ins', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
 					$build .= '<input name="action" value="lw_woo_gdpr_changeopt" type="hidden">';
-					$build .= '<input name="lw_woo_gdpr_data_changeopt_user" value="' . absint( $user_id ) . '" type="hidden">';
+					$build .= '<input id="lw_woo_gdpr_data_changeopt_user" name="lw_woo_gdpr_data_changeopt_user" value="' . absint( $user_id ) . '" type="hidden">';
 
 				// Close the paragraph.
 				$build .= '</p>';
@@ -301,6 +273,11 @@ class LW_Woo_GDPR_Account {
 
 		// Close the div.
 		$build .= '</div>';
+
+		// Echo if requested.
+		if ( ! empty( $echo ) ) {
+			echo $build;
+		}
 
 		// Return our build.
 		return $build;

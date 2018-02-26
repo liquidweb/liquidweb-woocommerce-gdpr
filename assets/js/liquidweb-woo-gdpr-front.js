@@ -25,6 +25,7 @@ jQuery(document).ready( function($) {
 	 * Set some vars for later
 	 */
 	var optsForm   = 'form.lw-woo-gdpr-changeopt-form';
+	var optsList   = 'ul.lw-woo-gdpr-optin-list';
 	var optsInputs = 'ul.lw-woo-gdpr-optin-list input:checked';
 	var optsSubmit = '.lw-woo-gdpr-optin-list-submit';
 
@@ -57,7 +58,7 @@ jQuery(document).ready( function($) {
 			optsUserID  = $( 'input#lw_woo_gdpr_data_changeopt_user' ).val();
 			optsUpdate  = $( optsInputs ).map( function() { return this.id; }).get();
 
-			console.log( optsUpdate );
+			// console.log( optsUpdate );
 
 			// Build the data structure for the call.
 			var data = {
@@ -66,8 +67,8 @@ jQuery(document).ready( function($) {
 				optins: optsUpdate,
 				nonce: optsNonce
 			};
+
 			// console.log( data );
-			/*
 			jQuery.post( ajaxurl, data, function( response ) {
 
 				// console.log( response );
@@ -80,17 +81,10 @@ jQuery(document).ready( function($) {
 				// We got table row markup, so show it.
 				if ( response.data.markup !== '' ) {
 
-					// Clear the new field inputs.
-					clearNewFieldInputs();
-
-					// Add the row itself.
-					$( 'table#lw-woo-gdpr-fields-table tr:last' ).after( response.data.markup );
-
-					// Refresh the sortable table.
-					$( sortTable ).sortable( 'refreshPositions' );
+					// Clear out the existing list and add ours.
+					$( optsList ).empty().append( response.data.markup );
 				}
 			});
-			*/
 		});
 
 

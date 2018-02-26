@@ -656,10 +656,11 @@ final class LW_Woo_GDPR {
 	 * @param  integer $user_id   The user we are going to look up if no customer object is there.
 	 * @param  object  $customer  The customer object.
 	 * @param  array   $data      The field data to use in updating.
+	 * @param  boolean $use_keys  Whether or not to use the array keys from the data.
 	 *
 	 * @return void
 	 */
-	public function update_user_optin_fields( $user_id = 0, $customer, $data = array() ) {
+	public function update_user_optin_fields( $user_id = 0, $customer, $data = array(), $use_keys = true ) {
 
 		// Make sure we have everything required.
 		if ( empty( $user_id ) && empty( $customer ) ) {
@@ -680,10 +681,13 @@ final class LW_Woo_GDPR {
 			// Set the meta key using the field name.
 			$meta_key   = 'woo_gdrp_' . esc_attr( $id );
 
-			// Set the value from the posted data, or null if it's missing.
-			$meta_value = ! empty( $data ) && in_array( $id, array_keys( $data ) ) ? 1 : 0;
+			// Check our dataset.
+			$dataset    = ! empty( $use_keys ) ? array_keys( $data ) : $data;
 
-			// wp_die( 'key: ' . $meta_key . ' ||  value: ' . $meta_value );
+			// Set the value from the posted data, or null if it's missing.
+			$meta_value = ! empty( $data ) && in_array( $id, $dataset ) ? 1 : 0;
+
+			//wp_die( 'key: ' . $meta_key . ' ||  value: ' . $meta_value );
 
 			// And add it to the customer object.
 			if ( ! empty( $customer ) && is_object( $customer ) ) {

@@ -152,6 +152,65 @@ class LW_Woo_GDPR_Fields {
 		return $field;
 	}
 
+	/**
+	 * Get the actual list markup of the statuses.
+	 *
+	 * @param  array   $fields   The field data we have to render.
+	 * @param  integer $user_id  The user ID that is being viewed.
+	 * @param  boolean $echo     Whether to echo or return it.
+	 *
+	 * @return HTML
+	 */
+	public static function get_optin_status_list( $fields = array(), $user_id = 0, $echo = false ) {
+
+		// Bail without fields or a user ID.
+		if ( empty( $fields ) || empty( $user_id ) ) {
+			return;
+		}
+
+		// Set our empty.
+		$build  = '';
+
+		// Loop my fields to display.
+		foreach ( $fields as $key => $field ) {
+
+			// Check the status.
+			$status = get_user_meta( $user_id, 'woo_gdrp_' . $key, true );
+			$check  = ! empty( $status ) ? true : false;
+
+			// Set the text accordingly.
+			$text   = ! empty( $status ) ? sprintf( __( 'You have opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) ) : sprintf( __( 'You have not opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) );
+
+			// Set new field args.
+			$new_field_args = array(
+				'name'      => 'lw_woo_gdpr_changeopt_items[' . esc_attr( $field['id'] ) . ']',
+				'label'     => wp_kses_post( $text ),
+				'required'  => false,
+				'checked'   => $check,
+			);
+
+			// Merge my new args.
+			$field  = wp_parse_args( $new_field_args, $field );
+
+			// Open up our list item.
+			$build .= '<li class="lw-woo-gdpr-data-option lw-woo-gdpr-optin-list-item">';
+
+				// Include the actual checkbox.
+				$build .= self::checkbox_field( $field );
+
+			// Close the list item.
+			$build .= '</li>';
+		}
+
+		// Echo if requested.
+		if ( ! empty( $echo ) ) {
+			echo $build;
+		}
+
+		// Return our build.
+		return $build;
+	}
+
 	// End our class.
 }
 

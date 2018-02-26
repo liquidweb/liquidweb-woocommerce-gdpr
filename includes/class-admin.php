@@ -27,6 +27,7 @@ class LW_Woo_GDPR_Admin {
 	 */
 	public function init() {
 		add_action( 'admin_enqueue_scripts',                array( $this, 'load_admin_assets'           ),  10      );
+		add_filter( 'plugin_action_links',                  array( $this, 'quick_link'                  ),  10, 2   );
 		add_action( 'admin_notices',                        array( $this, 'process_request_notices'     )           );
 		add_action( 'admin_menu',                           array( $this, 'load_settings_menu'          ),  99      );
 	}
@@ -61,6 +62,49 @@ class LW_Woo_GDPR_Admin {
 
 		// And our JS.
 		wp_enqueue_script( 'liquidweb-woo-gdpr-admin', LW_WOO_GDPR_ASSETS_URL . '/js/' . $file . '.js', array( 'jquery' ), $vers, true );
+	}
+
+	/**
+	 * Add our "settings" links to the plugins page.
+	 *
+	 * @param  array  $links  The existing array of links.
+	 * @param  string $file   The file we are actually loading from.
+	 *
+	 * @return array  $links  The updated array of links.
+	 */
+	public function quick_link( $links, $file ) {
+
+		// Bail without caps.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $links;
+		}
+
+		// Set the static var.
+		static $this_plugin;
+
+		// Check the base if we aren't paired up.
+		if ( ! $this_plugin ) {
+			$this_plugin = LW_WOO_GDPR_BASE;
+		}
+
+		// Check to make sure we are on the correct plugin.
+		if ( $file != $this_plugin ) {
+			return $links;
+		}
+
+		// Fetch our two links.
+		$a_link = lw_woo_gdpr()->get_admin_menu_link();
+		$s_link = lw_woo_gdpr()->get_settings_tab_link();
+
+		// Now create the link markup.
+		$admin  = '<a href="' . esc_url( $a_link ) . ' ">' . __( 'Requests', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+		$setup  = '<a href="' . esc_url( $s_link ) . ' ">' . __( 'Settings', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+
+		// Add it to the array.
+		array_unshift( $links, $setup, $admin );
+
+		// Return the resulting array.
+		return $links;
 	}
 
 	/**

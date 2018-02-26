@@ -101,6 +101,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'The label field is required.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'missing-user-id' :
+			return __( 'The user ID could not be determined.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'bad-field-id' :
 			return __( 'The ID of the field could not be determined.', 'liquidweb-woocommerce-gdpr' );
 			break;
