@@ -36,6 +36,9 @@ class LW_Woo_GDPR_FrontEnd {
 
 		// Load our CSS file.
 		wp_enqueue_style( 'liquidweb-woo-gdpr-front', LW_WOO_GDPR_ASSETS_URL . '/css/' . $file . '.css', array( 'dashicons' ), $vers, 'all' );
+
+		// And our JS.
+		wp_enqueue_script( 'liquidweb-woo-gdpr-front', LW_WOO_GDPR_ASSETS_URL . '/js/' . $file . '.js', array( 'jquery' ), $vers, true );
 	}
 
 	// End our class.

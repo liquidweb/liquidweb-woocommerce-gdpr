@@ -289,7 +289,7 @@ class LW_Woo_GDPR_Account {
 					$build .= wp_nonce_field( 'lw_woo_gdpr_changeopt_action', 'lw_woo_gdpr_changeopt_nonce', false, false );
 
 					// The button / action combo.
-					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_changeopt" value="' . __( 'Update Your Opt-Ins', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
+					$build .= '<input class="woocommerce-Button button lw-woo-gdpr-optin-list-submit" name="lw_woo_gdpr_changeopt" value="' . __( 'Update Your Opt-Ins', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
 					$build .= '<input name="action" value="lw_woo_gdpr_changeopt" type="hidden">';
 					$build .= '<input name="lw_woo_gdpr_data_changeopt_user" value="' . absint( $user_id ) . '" type="hidden">';
 
