@@ -303,6 +303,9 @@ class LW_Woo_GDPR_Account {
 	 */
 	public static function display_export_options( $user_id = 0, $datatypes = array() ) {
 
+		// Include a check for datatypes.
+		$datatypes  = ! empty( $datatypes ) ? $datatypes : lw_woo_gdpr_export_types();
+
 		// Bail without my user ID or data types.
 		if ( empty( $user_id ) || empty( $datatypes ) ) {
 			return;
@@ -379,6 +382,9 @@ class LW_Woo_GDPR_Account {
 	 */
 	public static function display_export_downloads( $user_id = 0, $datatypes = array() ) {
 
+		// Include a check for datatypes.
+		$datatypes  = ! empty( $datatypes ) ? $datatypes : lw_woo_gdpr_export_types();
+
 		// Bail without my user ID or data types.
 		if ( empty( $user_id ) || empty( $datatypes ) ) {
 			return;
@@ -411,17 +417,19 @@ class LW_Woo_GDPR_Account {
 				// Now loop my types.
 				foreach ( $datatypes as $datatype => $label ) {
 
-					// Figure out if we have files of this type.
-					$single = ! empty( $files[ $datatype ] ) ? $files[ $datatype ] : '';
+					// Bail if we have no type here.
+					if ( empty( $files[ $datatype ] ) ) {
+						continue;
+					}
 
 					// Open up the list item.
-					$build .= '<li class="lw-woo-gdpr-data-option lw-woo-gdpr-download-option">';
+					$build .= '<li class="lw-woo-gdpr-data-option lw-woo-gdpr-download-option lw-woo-gdpr-data-option-' . esc_attr( $datatype ) . '">';
 
 						// Our label for the data type.
 						$build .= '<span class="data-option-label">' . esc_html( $label ) . '</span>';
 
 						// And our download / delete links.
-						$build .= lw_woo_gdpr_create_file_links( $single, $datatype, $base );
+						$build .= lw_woo_gdpr_create_file_links( $files[ $datatype ], $datatype, $base, $user_id );
 
 					// Close the list item.
 					$build .= '</li>';
@@ -450,6 +458,9 @@ class LW_Woo_GDPR_Account {
 	 * @return HTML
 	 */
 	public static function display_data_delete( $user_id = 0, $datatypes = array() ) {
+
+		// Include a check for datatypes.
+		$datatypes  = ! empty( $datatypes ) ? $datatypes : lw_woo_gdpr_export_types();
 
 		// Bail without my user ID or data types.
 		if ( empty( $user_id ) || empty( $datatypes ) ) {

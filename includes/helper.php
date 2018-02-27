@@ -348,16 +348,17 @@ function lw_woo_gdpr_check_export_file( $userfile = '', $filetime = 0 ) {
 /**
  * Create the file links for a specific type.
  *
- * @param  string $single    The file that should be there.
- * @param  string $datatype  Which data type this is for.
- * @param  string $baselink  The base URL for the link.
+ * @param  string  $single    The file that should be there.
+ * @param  string  $datatype  Which data type this is for.
+ * @param  string  $baselink  The base URL for the link.
+ * @param  integer $user_id   The user ID we are making.
  *
  * @return void
  */
-function lw_woo_gdpr_create_file_links( $single = '', $datatype = '', $baselink = '' ) {
+function lw_woo_gdpr_create_file_links( $single = '', $datatype = '', $baselink = '', $user_id = 0 ) {
 
 	// Bail without the required parts.
-	if ( empty( $datatype ) || empty( $baselink ) ) {
+	if ( empty( $datatype ) || empty( $baselink ) || empty( $user_id ) ) {
 		return;
 	}
 
@@ -383,9 +384,9 @@ function lw_woo_gdpr_create_file_links( $single = '', $datatype = '', $baselink 
 	$setup  = '';
 
 	// Build the links themselves.
-	$setup .= '<a title="' . esc_attr( $downtitle ) . '" href="' . esc_url( $downlink ) . '">' . esc_html__( 'Download', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+	$setup .= '<a class="lw-woo-gdpr-option-link lw-woo-gdpr-download-link" data-user-id="' . absint( $user_id ) . '" data-type="' . esc_attr( $datatype ) . '" title="' . esc_attr( $downtitle ) . '" href="' . esc_url( $downlink ) . '">' . esc_html__( 'Download', 'liquidweb-woocommerce-gdpr' ) . '</a>';
 	$setup .= '&nbsp;|&nbsp;';
-	$setup .= '<a title="' . esc_attr( $delttitle ) . '" href="' . esc_url( $deltlink ) . '">' . esc_html__( 'Delete', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+	$setup .= '<a class="lw-woo-gdpr-option-link lw-woo-gdpr-delete-link" data-user-id="' . absint( $user_id ) . '" data-type="' . esc_attr( $datatype ) . '" data-nonce="' . wp_create_nonce( 'lw_woo_gdpr_delete_file' ) . '" title="' . esc_attr( $delttitle ) . '" href="' . esc_url( $deltlink ) . '">' . esc_html__( 'Delete', 'liquidweb-woocommerce-gdpr' ) . '</a>';
 
 	// Return the build setup.
 	return $setup;

@@ -182,6 +182,7 @@ final class LW_Woo_GDPR {
 		require_once LW_WOO_GDPR_INCLS . '/utilities.php';
 
 		// Load our various classes.
+		require_once LW_WOO_GDPR_INCLS . '/class-account.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-formatting.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-data.php';
 		require_once LW_WOO_GDPR_INCLS . '/class-fields.php';
@@ -200,7 +201,6 @@ final class LW_Woo_GDPR {
 		if ( ! is_admin() ) {
 			require_once LW_WOO_GDPR_INCLS . '/class-front-end.php';
 			require_once LW_WOO_GDPR_INCLS . '/class-checkout.php';
-			require_once LW_WOO_GDPR_INCLS . '/class-account.php';
 		}
 
 		// Load our install, cron, deactivate, and uninstall items.
@@ -579,10 +579,11 @@ final class LW_Woo_GDPR {
 	 * @param  integer $user_id    What user this is tied to.
 	 * @param  string  $datatype   What data type the file was.
 	 * @param  array   $downloads  The name of the file.
+	 * @param  boolean $redirect   Whether to do the redirect.
 	 *
 	 * @return void
 	 */
-	public function delete_file( $file_url = '', $user_id = 0, $datatype = '', $downloads = array() ) {
+	public function delete_file( $file_url = '', $user_id = 0, $datatype = '', $downloads = array(), $redirect = true ) {
 
 		// Make sure we have everything required.
 		if ( empty( $file_url ) || empty( $user_id ) || empty( $datatype ) || empty( $downloads ) ) {
@@ -610,6 +611,11 @@ final class LW_Woo_GDPR {
 			update_user_meta( $user_id, 'woo_gdpr_export_files', $downloads );
 		} else {
 			delete_user_meta( $user_id, 'woo_gdpr_export_files' );
+		}
+
+		// If we don't wanna redirect, just return true.
+		if ( false === $redirect ) {
+			return true;
 		}
 
 		// Now set my redirect link.

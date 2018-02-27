@@ -48,13 +48,18 @@ jQuery(document).ready( function($) {
 	var optsNonce  = '';
 	var optsUpdate;
 
-
 	var exportForm   = 'form.lw-woo-gdpr-export-form';
+	var exportList   = 'ul.lw-woo-gdpr-export-options';
 	var exportInputs = 'ul.lw-woo-gdpr-export-options input:checked';
 	var exportSubmit = '.lw-woo-gdpr-optin-export-submit';
-	var optsUserID = 0;
+	var exportUserID = 0;
 	var exportNonce  = '';
 	var exportUpdate;
+
+	var filesBlock   = 'div.lw-woo-gdpr-download-section';
+	var filesUserID  = 0;
+	var filesType    = '';
+	var filesNonce   = '';
 
 	/**
 	 * Look for click actions on the opt-ins list.
@@ -133,7 +138,6 @@ jQuery(document).ready( function($) {
 			exportUserID  = $( 'input#lw_woo_gdpr_data_export_user' ).val();
 			exportUpdate  = $( exportInputs ).map( function() { return this.value; }).get();
 
-			/*
 			// Build the data structure for the call.
 			var data = {
 				action: 'lw_woo_request_user_exports',
@@ -145,7 +149,7 @@ jQuery(document).ready( function($) {
 			// console.log( data );
 			jQuery.post( ajaxurl, data, function( response ) {
 
-				// console.log( response );
+				console.log( response );
 
 				// Handle the failure.
 				if ( response.success !== true ) {
@@ -159,10 +163,52 @@ jQuery(document).ready( function($) {
 					setAccountNotification( 'success', response.data.message );
 
 					// Clear out the existing list and add ours.
-					$( optsList ).empty().append( response.data.markup );
+					$( filesBlock ).replaceWith( response.data.markup );
 				}
 			});
-			*/
+		});
+
+		/**
+		 * Check for the user file delete request actions.
+		 */
+		$( filesBlock ).on( 'click', 'a.lw-woo-gdpr-delete-link', function( event ) {
+
+			// Stop the actual click.
+			event.preventDefault();
+
+			// Get my user ID.
+			filesUserID = $( this ).data( 'user-id' );
+			filesType   = $( this ).data( 'type' );
+			filesNonce  = $( this ).data( 'nonce' );
+
+			// Build the data structure for the call.
+			var data = {
+				action: 'lw_woo_delete_export_file',
+				user_id: filesUserID,
+				datatype: filesType,
+				nonce: filesNonce
+			};
+
+			// console.log( data );
+			jQuery.post( ajaxurl, data, function( response ) {
+
+				// console.log( response );
+
+				// Handle the failure.
+				if ( response.success !== true ) {
+					return false;
+				}
+
+				// Remove our individual row.
+				if ( response.data.message !== '' ) {
+
+					// Show our message.
+					setAccountNotification( 'success', response.data.message );
+
+					// Remove the single item.
+					$( filesBlock ).find( 'li.lw-woo-gdpr-data-option-' + filesType ).remove();
+				}
+			});
 		});
 
 	});
