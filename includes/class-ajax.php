@@ -20,6 +20,8 @@ class LW_Woo_GDPR_Ajax {
 	 */
 	public function init() {
 		add_action( 'wp_ajax_lw_woo_update_user_optins',    array( $this, 'update_user_optins'          )           );
+		add_action( 'wp_ajax_lw_woo_request_user_exports',  array( $this, 'request_user_exports'        )           );
+
 		add_action( 'wp_ajax_lw_woo_add_new_optin_row',     array( $this, 'add_new_optin_row'           )           );
 		add_action( 'wp_ajax_lw_woo_delete_single_row',     array( $this, 'delete_single_row'           )           );
 		add_action( 'wp_ajax_lw_woo_update_sorted_rows',    array( $this, 'update_sorted_rows'          )           );
@@ -32,18 +34,8 @@ class LW_Woo_GDPR_Ajax {
 	 */
 	public function update_user_optins() {
 
-		// Bail if we are doing a REST API request.
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return;
-		}
-
-		// Bail out if running an autosave.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Bail out if running a cron, unless we've skipped that.
-		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
 			return;
 		}
 
@@ -87,6 +79,62 @@ class LW_Woo_GDPR_Ajax {
 	}
 
 	/**
+	 * Handle the user requesting their exports.
+	 *
+	 * @return mixed
+	 */
+	public function request_user_exports() {
+
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_request_user_exports' !== sanitize_text_field( $_POST['action'] ) ) {
+			return false;
+		}
+
+		// Check to see if our nonce was provided.
+		if ( empty( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'lw_woo_gdpr_export_action' ) ) {
+			self::send_error( 'invalid-nonce' );
+		}
+
+		// Check for the user ID field.
+		if ( empty( $_POST['user_id'] ) ) {
+			self::send_error( 'missing-user-id' );
+		}
+
+		// Check for the export types field.
+		if ( empty( $_POST['exports'] ) ) {
+			self::send_error( 'NO_OPTION' );
+		}
+
+		// Clean up the items that were provided.
+		$items  = array_filter( (array) $_POST['exports'], 'sanitize_text_field' );
+
+		// Run through the update.
+		if ( false !== $update = lw_woo_gdpr()->update_user_optin_fields( absint( $_POST['user_id'] ), null, $items, false ) ) {
+
+			// Grab our fields.
+			$fields = lw_woo_gdpr_optin_fields();
+
+			// Build our return.
+			$return = array(
+				'errcode' => null,
+				'markup'  => LW_Woo_GDPR_Fields::get_optin_status_list( $fields, absint( $_POST['user_id'] ) ),
+				'message' => lw_woo_gdpr_notice_text( 'success-changeopts' ),
+			);
+
+			// And handle my JSON return.
+			wp_send_json_success( $return );
+		}
+
+		// Made it to the end without knowing what to do.
+		self::send_error( 'unknown' );
+	}
+
+	/**
 	 * Add a new row from the field.
 	 *
 	 * @return mixed
@@ -98,18 +146,8 @@ class LW_Woo_GDPR_Ajax {
 			die();
 		}
 
-		// Bail if we are doing a REST API request.
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return;
-		}
-
-		// Bail out if running an autosave.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Bail out if running a cron, unless we've skipped that.
-		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
 			return;
 		}
 
@@ -182,18 +220,8 @@ class LW_Woo_GDPR_Ajax {
 			die();
 		}
 
-		// Bail if we are doing a REST API request.
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return;
-		}
-
-		// Bail out if running an autosave.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Bail out if running a cron, unless we've skipped that.
-		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
 			return;
 		}
 
@@ -250,18 +278,8 @@ class LW_Woo_GDPR_Ajax {
 			die();
 		}
 
-		// Bail if we are doing a REST API request.
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return;
-		}
-
-		// Bail out if running an autosave.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Bail out if running a cron, unless we've skipped that.
-		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
 			return;
 		}
 
@@ -302,6 +320,32 @@ class LW_Woo_GDPR_Ajax {
 
 		// And handle my JSON return.
 		wp_send_json_success( $return );
+	}
+
+	/**
+	 * Check our various constants on an Ajax call.
+	 *
+	 * @return boolean
+	 */
+	public static function check_ajax_constants() {
+
+		// Check for a REST API request.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return false;
+		}
+
+		// Check for running an autosave.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return false;
+		}
+
+		// Check for running a cron, unless we've skipped that.
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			return false;
+		}
+
+		// We hit none of the checks, so proceed.
+		return true;
 	}
 
 	/**

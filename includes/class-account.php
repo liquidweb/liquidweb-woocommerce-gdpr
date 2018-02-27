@@ -19,7 +19,8 @@ class LW_Woo_GDPR_Account {
 	 */
 	public function init() {
 		add_action( 'init',                                             array( $this, 'check_user_optin_changes'    )           );
-		add_action( 'woocommerce_before_account_navigation',            array( $this, 'add_endpoint_notices'        )           );
+		add_action( 'woocommerce_before_account_navigation',            array( $this, 'add_endpoint_anchor'         ),  10      );
+		add_action( 'woocommerce_before_account_navigation',            array( $this, 'add_endpoint_notices'        ),  15      );
 		add_filter( 'the_title',                                        array( $this, 'add_endpoint_title'          )           );
 		add_filter( 'woocommerce_account_menu_items',                   array( $this, 'add_endpoint_menu_item'      )           );
 		add_action( 'woocommerce_account_privacy-data_endpoint',        array( $this, 'add_endpoint_content'        )           );
@@ -67,6 +68,15 @@ class LW_Woo_GDPR_Account {
 		}
 
 		// And do the return / redirect / etc for the error.
+	}
+
+	/**
+	 * Add the anchor for the response messages.
+	 *
+	 * @return HTML
+	 */
+	public function add_endpoint_anchor() {
+		echo '<div class="lw-woo-account-notices"></div>';
 	}
 
 	/**
@@ -342,9 +352,9 @@ class LW_Woo_GDPR_Account {
 					$build .= wp_nonce_field( 'lw_woo_gdpr_export_action', 'lw_woo_gdpr_export_nonce', false, false );
 
 					// The button / action combo.
-					$build .= '<input class="woocommerce-Button button" name="lw_woo_gdpr_data_export" value="' . __( 'Request Export Data', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
+					$build .= '<input class="woocommerce-Button button lw-woo-gdpr-optin-export-submit" name="lw_woo_gdpr_data_export" value="' . __( 'Request Export Data', 'liquidweb-woocommerce-gdpr' ) . '" type="submit">';
 					$build .= '<input name="action" value="lw_woo_gdpr_data_export" type="hidden">';
-					$build .= '<input name="lw_woo_gdpr_data_export_user" value="' . absint( $user_id ) . '" type="hidden">';
+					$build .= '<input id="lw_woo_gdpr_data_export_user" name="lw_woo_gdpr_data_export_user" value="' . absint( $user_id ) . '" type="hidden">';
 
 				// Close the paragraph.
 				$build .= '</p>';

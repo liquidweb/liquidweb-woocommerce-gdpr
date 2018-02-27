@@ -852,7 +852,7 @@ final class LW_Woo_GDPR {
 		$update = wp_insert_user( $setup );
 
 		// Bail if we failed the update.
-		if ( is_wp_error( $update ) ) {
+		if ( empty( $update ) || is_wp_error( $update ) ) {
 			return false;
 		}
 
@@ -864,15 +864,17 @@ final class LW_Woo_GDPR {
 
 		// Set the user meta.
 		$meta   = array(
-			'billing_first_name'    => $data['first'],
-			'billing_last_name'     => $data['last'],
-			'billing_address_1'     => $data['street'],
-			'billing_email'         => $data['email'],
-			'shipping_first_name'   => $data['first'],
-			'shipping_last_name'    => $data['last'],
-			'shipping_address_1'    => $data['street'],
-			'woo_gdpr_randomized'   => true,
-			'woo_gdpr_random_date'  => current_time( 'timestamp', 1 ),
+			'billing_first_name'        => $data['first'],
+			'billing_last_name'         => $data['last'],
+			'billing_address_1'         => $data['street'],
+			'billing_email'             => $data['email'],
+			'shipping_first_name'       => $data['first'],
+			'shipping_last_name'        => $data['last'],
+			'shipping_address_1'        => $data['street'],
+			'woo_gdpr_randomized'       => true,
+			'woo_gdpr_random_date'      => current_time( 'timestamp', 1 ),
+			'community-events-location' => '127.0.0.1',
+			'paying_customer'           => 0,
 		);
 
 		// Loop my meta.
