@@ -42,7 +42,7 @@ jQuery(document).ready( function($) {
 	$( sortTable ).divExists( function() {
 
 		// Make our table sortable.
-		$( this ).find( 'tbody' ).sortable({
+		$( sortBody ).sortable({
 			handle: '.lw-woo-gdpr-trigger-icon',
 			update: function( event, ui ) {
 
