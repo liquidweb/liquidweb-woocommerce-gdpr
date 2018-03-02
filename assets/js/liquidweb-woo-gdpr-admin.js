@@ -33,6 +33,8 @@ jQuery(document).ready( function($) {
 	 * Set some vars for later
 	 */
 	var saveTable = 'table.lw-woo-gdpr-add-new-table-wrap';
+	var saveForm = 'form#mainform';
+	var saveSubmit = 'form#mainform input.lw-woo-gdpr-add-new';
 	var sortTable = 'table.lw-woo-gdpr-saved-table-wrap';
 	var sortBody = 'table.lw-woo-gdpr-saved-table-wrap tbody';
 	var sortUpdate;
@@ -74,9 +76,13 @@ jQuery(document).ready( function($) {
 	/**
 	 * Add a new item into the table.
 	 */
-	$( saveTable ).on( 'click', 'input.lw-woo-gdpr-add-new', function( event ) {
+	//$( saveTable ).on( 'submit', 'input.lw-woo-gdpr-add-new', function( event ) {
+	$( saveSubmit ).submit( function( event ) {
 
-		// Stop the actual click.
+		console.log( event );
+		return;
+
+		// Stop the actual submit.
 		event.preventDefault();
 
 		// Fetch the nonce.
@@ -88,11 +94,32 @@ jQuery(document).ready( function($) {
 		}
 
 		// Pull all three items.
-		newRequired  = $( 'input#lw-woo-gdpr-new-required' ).is( ':checked' );
-		newTitle     = $( 'input#lw-woo-gdpr-new-title' ).val();
-		newLabel     = $( 'input#lw-woo-gdpr-new-label' ).val();
+		var data = {
+			action: 'lw_woo_add_new_optin_row',
+			required: $( 'input#lw-woo-gdpr-new-required' ).is( ':checked' ),
+			title: $( 'input#lw-woo-gdpr-new-title' ).val(),
+			label: $( 'input#lw-woo-gdpr-new-label' ).val(),
+			nonce: newNonce
+		};
+
+		// Send out the ajax call itself.
+		jQuery.ajax({
+			url:        ajaxurl,
+			type:       'POST',
+			async:      true,
+			dataType:   'json',
+			data:       data
+		}).done( function( data ) {
+			console.log( 'done' );
+			console.log( data );
+
+		}).fail( function( data ) {
+			console.log( 'failed' );
+			console.log( data );
+		});
 
 		// Build the data structure for the call.
+		/*
 		var data = {
 			action: 'lw_woo_add_new_optin_row',
 			required: newRequired,
@@ -100,7 +127,9 @@ jQuery(document).ready( function($) {
 			label: newLabel,
 			nonce: newNonce
 		};
+
 		// console.log( data );
+
 		jQuery.post( ajaxurl, data, function( response ) {
 
 			// console.log( response );
@@ -122,7 +151,9 @@ jQuery(document).ready( function($) {
 				// Refresh the sortable table.
 				$( sortTable ).sortable( 'refreshPositions' );
 			}
-		});
+		}, 'json' );
+		*/
+
 	});
 
 	/**
