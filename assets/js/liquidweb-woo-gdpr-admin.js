@@ -32,20 +32,9 @@ jQuery(document).ready( function($) {
 	/**
 	 * Set some vars for later
 	 */
-	var saveTable = 'table.lw-woo-gdpr-add-new-table-wrap';
 	var saveForm = 'form#mainform';
-	var saveSubmit = 'form#mainform input.lw-woo-gdpr-add-new';
 	var sortTable = 'table.lw-woo-gdpr-saved-table-wrap';
 	var sortBody = 'table.lw-woo-gdpr-saved-table-wrap tbody';
-	var sortUpdate;
-	var fieldBlock;
-	var fieldID;
-	var fieldNonce;
-
-	var newRequired;
-	var newTitle;
-	var newLabel;
-	var newNonce;
 
 	/**
 	 * Set up the sortable table rows.
@@ -57,33 +46,29 @@ jQuery(document).ready( function($) {
 			handle: '.lw-woo-gdpr-trigger-icon',
 			update: function( event, ui ) {
 
-				// Fetch the updated sort order.
-				sortUpdate = $( sortBody ).sortable( 'toArray', { attribute: 'data-key' } );
-
-				// Build the data structure for the call.
+				// Build the data structure for the call with the updated sort order.
 				var data = {
 					action: 'lw_woo_update_sorted_rows',
-					sorted: sortUpdate
+					sorted: $( sortBody ).sortable( 'toArray', { attribute: 'data-key' } )
 				};
 
 				// Send the post request, we don't actually care about the response.
 				jQuery.post( ajaxurl, data );
 			}
 		});
-
 	});
 
 	/**
 	 * Add a new item into the table.
 	 */
-	//$( saveTable ).on( 'submit', 'input.lw-woo-gdpr-add-new', function( event ) {
-	$( saveSubmit ).submit( function( event ) {
-
-		console.log( event );
-		return;
+	$( saveForm ).submit( function( event ) {
 
 		// Stop the actual submit.
 		event.preventDefault();
+
+		// We call this a sledgehammer because Woo doesn't register
+		// the callback until the user has clicked one of the tabs.
+		$( '.woo-nav-tab-wrapper a' ).off();
 
 		// Fetch the nonce.
 		newNonce = $( 'input#lw_woo_gdpr_new_nonce' ).val();
@@ -93,7 +78,7 @@ jQuery(document).ready( function($) {
 			return false;
 		}
 
-		// Pull all three items.
+		// Build the data structure for the call.
 		var data = {
 			action: 'lw_woo_add_new_optin_row',
 			required: $( 'input#lw-woo-gdpr-new-required' ).is( ':checked' ),
@@ -101,37 +86,10 @@ jQuery(document).ready( function($) {
 			label: $( 'input#lw-woo-gdpr-new-label' ).val(),
 			nonce: newNonce
 		};
-
-		// Send out the ajax call itself.
-		jQuery.ajax({
-			url:        ajaxurl,
-			type:       'POST',
-			async:      true,
-			dataType:   'json',
-			data:       data
-		}).done( function( data ) {
-			console.log( 'done' );
-			console.log( data );
-
-		}).fail( function( data ) {
-			console.log( 'failed' );
-			console.log( data );
-		});
-
-		// Build the data structure for the call.
-		/*
-		var data = {
-			action: 'lw_woo_add_new_optin_row',
-			required: newRequired,
-			title: newTitle,
-			label: newLabel,
-			nonce: newNonce
-		};
-
 		// console.log( data );
 
+		// Send out the ajax call itself.
 		jQuery.post( ajaxurl, data, function( response ) {
-
 			// console.log( response );
 
 			// Handle the failure.
@@ -149,11 +107,9 @@ jQuery(document).ready( function($) {
 				$( 'table#lw-woo-gdpr-fields-table tr:last' ).after( response.data.markup );
 
 				// Refresh the sortable table.
-				$( sortTable ).sortable( 'refreshPositions' );
+				$( sortBody ).sortable( 'refreshPositions' );
 			}
 		}, 'json' );
-		*/
-
 	});
 
 	/**
@@ -165,11 +121,11 @@ jQuery(document).ready( function($) {
 		event.preventDefault();
 
 		// Set my field block.
-		fieldBlock  = $( this ).parents( 'tr.lw-woo-gdpr-field-single' );
+		var fieldBlock  = $( this ).parents( 'tr.lw-woo-gdpr-field-single' );
 
 		// Fetch my field ID and nonce.
-		fieldID     = $( this ).data( 'field-id' );
-		fieldNonce  = $( this ).data( 'nonce' );
+		var fieldID     = $( this ).data( 'field-id' );
+		var fieldNonce  = $( this ).data( 'nonce' );
 
 		// console.log( fieldID );
 		// console.log( fieldNonce );
@@ -190,11 +146,10 @@ jQuery(document).ready( function($) {
 			field_id: fieldID,
 			nonce: fieldNonce
 		};
-
 		// console.log( data );
 
+		// Send out the ajax call itself.
 		jQuery.post( ajaxurl, data, function( response ) {
-
 			// console.log( response );
 
 			// Handle the failure.
@@ -211,10 +166,10 @@ jQuery(document).ready( function($) {
 				// Refresh the sortable table.
 				$( sortBody ).sortable( 'refreshPositions' );
 			}
-		});
+		}, 'json' );
 	});
 
 //********************************************************
-// you're still here? it's over. go home.
+// You're still here? It's over. Go home.
 //********************************************************
 });
