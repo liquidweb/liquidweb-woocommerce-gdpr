@@ -48,7 +48,7 @@ class LW_Woo_GDPR_Fields {
 		$field  = '';
 
 		// Start the label setup.
-		$field .= '<label class="woocommerce-form__label woocommerce-form-' . esc_attr( $args['id'] ) . '__label woocommerce-form__label-for-checkbox checkbox">';
+		$field .= '<label class="woocommerce-form__label woocommerce-form-' . esc_attr( $args['id'] ) . '__label woocommerce-form__label-for-checkbox lw-woo-gdpr-checkbox-label checkbox">';
 
 			// Set the input box.
 			$field .= '<input class="woocommerce-form__input woocommerce-form-' . esc_attr( $args['id'] ) . '__input-checkbox woocommerce-form__input-checkbox input-checkbox" name="' . esc_attr( $name ) . '" id="' . esc_attr( $args['id'] ) . '" type="checkbox" value="' . esc_attr( $value ) . '" ' . checked( $args['checked'], $value, false ) . ' ' . $reqrd . '>';
@@ -178,25 +178,30 @@ class LW_Woo_GDPR_Fields {
 			$status = get_user_meta( $user_id, 'woo_gdrp_' . $key, true );
 			$check  = ! empty( $status ) ? true : false;
 
-			// Set the text accordingly.
-			$text   = ! empty( $status ) ? sprintf( __( 'You have opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) ) : sprintf( __( 'You have not opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) );
+			// Set the label text accordingly.
+			$label  = ! empty( $status ) ? sprintf( __( 'You have opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) ) : sprintf( __( 'You have not opted in to %s', 'liquidweb-woocommerce-gdpr' ), esc_attr( $field['title'] ) );
 
 			// Set new field args.
 			$new_field_args = array(
 				'name'      => 'lw_woo_gdpr_changeopt_items[' . esc_attr( $field['id'] ) . ']',
-				'label'     => wp_kses_post( $text ),
+				'label'     => wp_kses_post( $label ),
 				'required'  => false,
 				'checked'   => $check,
 			);
 
 			// Merge my new args.
-			$field  = wp_parse_args( $new_field_args, $field );
+			$setup  = wp_parse_args( $new_field_args, $field );
 
 			// Open up our list item.
 			$build .= '<li class="lw-woo-gdpr-data-option lw-woo-gdpr-optin-list-item">';
 
 				// Include the actual checkbox.
-				$build .= self::checkbox_field( $field );
+				$build .= self::checkbox_field( $setup );
+
+				// Add the little text for the required.
+				if ( ! empty( $field['required'] ) ) {
+					$build .= ' <span class="lw-woo-required-text">(' . __( 'required', 'liquidweb-woocommerce-gdpr' ) . ')</span>';
+				}
 
 			// Close the list item.
 			$build .= '</li>';

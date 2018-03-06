@@ -2,6 +2,13 @@
   list-style-type: none;
   margin: 0 0 20px;
   padding: 0; }
+  .lw-woo-gdpr-account-item-list li .lw-woo-gdpr-checkbox-label {
+    display: inline-block; }
+  .lw-woo-gdpr-account-item-list li .lw-woo-required-text {
+    display: inline-block;
+    padding-left: 10px;
+    font-size: 90%;
+    font-style: italic; }
 
 .lw-woo-gdpr-data-options {
   margin: 0 0 20px; }

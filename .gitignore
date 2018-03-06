@@ -3,3 +3,4 @@ _notes.md
 _blank.scss
 package-lock.json
 node_modules
+.sass-cache

@@ -232,6 +232,7 @@ class LW_Woo_GDPR_Ajax {
 			$return = array(
 				'errcode' => null,
 				'message' => lw_woo_gdpr_notice_text( 'success-delete' ),
+				'markup'  => 'li.lw-woo-gdpr-data-option-' . $datatype,
 			);
 
 			// And handle my JSON return.

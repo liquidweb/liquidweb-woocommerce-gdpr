@@ -11,7 +11,9 @@
     "url": "https://www.liquidweb.com"
   },
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "grunt-cli": "^1.2.0"
+  },
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-check-modules": "^1.1.0",
