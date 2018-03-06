@@ -32,12 +32,13 @@
 		width: 100%;
 		margin: 0 0 4px 0;
 		line-height: 24px;
+		text-align: left;
 
 		input {
 			cursor: pointer;
 			display: inline-block;
 			vertical-align: middle;
-			margin: 3px 4px 0 0;
+			margin: 3px 4px 0 4px;
 			height: 24px;
 		}
 
@@ -87,7 +88,8 @@
 			vertical-align: middle;
 
 			.lw-woo-gdpr-data-option-icon {
-				margin-top: 1px;
+				text-align: left;
+				margin: 1px 4px 0 0;
 				opacity: 0.85;
 			}
 		}

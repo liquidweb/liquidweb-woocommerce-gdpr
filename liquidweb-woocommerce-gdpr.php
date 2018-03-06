@@ -738,11 +738,26 @@ final class LW_Woo_GDPR {
 			return false;
 		}
 
+		// Set an empty count variable.
+		$count  = 0;
+
 		// Get any existing requests.
 		$requests   = get_option( 'lw_woo_gdrp_delete_requests', array() );
 
 		// Manage adding one.
 		if ( 'add' === esc_attr( $action ) ) {
+
+			// Check for the existing delete requests.
+			$current    = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+			// Merge any existing data requests.
+			$datatypes  = ! empty( $current ) ? wp_parse_args( $datatypes, (array) $current ) : $datatypes;
+
+			// Make sure no duplicates exist.
+			$datatypes  = array_unique( $datatypes );
+
+			// Set our count return.
+			$count  = count( $datatypes );
 
 			// Update the user meta so we can track it it.
 			update_user_meta( $user_id, 'woo_gdpr_deleteme_request', $datatypes );
@@ -768,7 +783,7 @@ final class LW_Woo_GDPR {
 		update_option( 'lw_woo_gdrp_delete_requests', $requests );
 
 		// Return that we've done it.
-		return true;
+		return $count;
 	}
 
 	/**

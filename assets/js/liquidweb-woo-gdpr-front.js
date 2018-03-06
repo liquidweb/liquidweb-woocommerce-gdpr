@@ -19,7 +19,7 @@ function setAccountNotification( noticeType, noticeText ) {
 	scrollToMessage();
 
 	// And now clear it after 4 seconds.
-	jQuery( '.lw-woo-account-notices' ).delay( 4000 ).fadeOut( 'slow', function() {
+	jQuery( '.lw-woo-gdpr-notice' ).delay( 5000 ).fadeOut( 'slow', function() {
 		jQuery( this ).remove();
 	});
 }
@@ -30,10 +30,21 @@ function setAccountNotification( noticeType, noticeText ) {
 function scrollToMessage() {
 
 	jQuery( 'html,body' ).animate({
-		scrollTop: jQuery( '.lw-woo-gdpr-notice' ).offset().top - 60
+		scrollTop: jQuery( '.lw-woo-account-notices' ).offset().top - 60
 	}, 500 );
 
+	// And just return false.
 	return false;
+}
+
+/**
+ * Clear all the checkboxes in a list.
+ */
+function clearAllCheckboxes( listBlock ) {
+
+	jQuery( listBlock ).each( function() {
+		jQuery( this ).find( 'input:checkbox' ).prop( 'checked', false );
+	});
 }
 
 /**
@@ -60,19 +71,8 @@ jQuery(document).ready( function($) {
 	/**
 	 * Set some vars for later
 	 */
-	var optsForm   = 'form.lw-woo-gdpr-changeopt-form';
-	var optsList   = 'ul.lw-woo-gdpr-optin-list';
-	var optsInputs = 'ul.lw-woo-gdpr-optin-list input:checked';
-	var optsSubmit = '.lw-woo-gdpr-optin-list-submit';
-
-	var exportForm   = 'form.lw-woo-gdpr-export-form';
-	var exportList   = 'ul.lw-woo-gdpr-export-options';
-	var exportInputs = 'ul.lw-woo-gdpr-export-options input:checked';
-	var exportSubmit = '.lw-woo-gdpr-optin-export-submit';
-	var exportUpdate;
-
+	var messageType;
 	var filesBlock   = 'div.lw-woo-gdpr-download-section';
-	var filesType    = '';
 
 	/**
 	 * Look for click actions on the opt-ins list.
@@ -82,7 +82,7 @@ jQuery(document).ready( function($) {
 		/**
 		 * Check for the user saving opt-in actions.
 		 */
-		$( optsForm ).on( 'click', optsSubmit, function( event ) {
+		$( 'form.lw-woo-gdpr-changeopt-form' ).submit( function( event ) {
 
 			// Stop the actual click.
 			event.preventDefault();
@@ -99,7 +99,7 @@ jQuery(document).ready( function($) {
 			var data = {
 				action: 'lw_woo_update_user_optins',
 				user_id: $( 'input#lw_woo_gdpr_data_changeopt_user' ).val(),
-				optins: $( optsInputs ).map( function() { return this.id; }).get(),
+				optins: $( 'ul.lw-woo-gdpr-optin-list input:checked' ).map( function() { return this.id; }).get(),
 				nonce: optsNonce
 			};
 			// console.log( data );
@@ -107,6 +107,15 @@ jQuery(document).ready( function($) {
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
 				// console.log( response );
+				// We got message markup, so show it.
+				if ( response.data.message !== '' ) {
+
+					// Determine the message type.
+					messageType = response.success !== true ? 'error' : 'success';
+
+					// Show our message.
+					setAccountNotification( messageType, response.data.message );
+				}
 
 				// Handle the failure.
 				if ( response.success !== true ) {
@@ -115,20 +124,15 @@ jQuery(document).ready( function($) {
 
 				// We got table row markup, so show it.
 				if ( response.data.markup !== '' ) {
-
-					// Show our message.
-					setAccountNotification( 'success', response.data.message );
-
-					// Clear out the existing list and add ours.
-					$( optsList ).empty().append( response.data.markup );
+					$( 'ul.lw-woo-gdpr-optin-list' ).empty().append( response.data.markup );
 				}
-			});
+			}, 'json' );
 		});
 
 		/**
 		 * Check for the user export request actions.
 		 */
-		$( exportForm ).on( 'click', exportSubmit, function( event ) {
+		$( 'form.lw-woo-gdpr-export-form' ).submit( function( event ) {
 
 			// Stop the actual click.
 			event.preventDefault();
@@ -145,7 +149,7 @@ jQuery(document).ready( function($) {
 			var data = {
 				action: 'lw_woo_request_user_exports',
 				user_id: $( 'input#lw_woo_gdpr_data_export_user' ).val(),
-				exports: $( exportInputs ).map( function() { return this.value; }).get(),
+				exports: $( 'ul.lw-woo-gdpr-export-options input:checked' ).map( function() { return this.value; }).get(),
 				nonce: exportNonce
 			};
 			// console.log( data );
@@ -153,6 +157,16 @@ jQuery(document).ready( function($) {
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
 				// console.log( response );
+
+				// We got message markup, so show it.
+				if ( response.data.message !== '' ) {
+
+					// Determine the message type.
+					messageType = response.success !== true ? 'error' : 'success';
+
+					// Show our message.
+					setAccountNotification( messageType, response.data.message );
+				}
 
 				// Handle the failure.
 				if ( response.success !== true ) {
@@ -162,13 +176,13 @@ jQuery(document).ready( function($) {
 				// We got table row markup, so show it.
 				if ( response.data.markup !== '' ) {
 
-					// Show our message.
-					setAccountNotification( 'success', response.data.message );
+					// Clear our checkboxes.
+					clearAllCheckboxes( 'li.lw-woo-gdpr-export-option' );
 
 					// Clear out the existing list and add ours.
 					$( filesBlock ).replaceWith( response.data.markup );
 				}
-			});
+			}, 'json' );
 		});
 
 		/**
@@ -180,7 +194,7 @@ jQuery(document).ready( function($) {
 			event.preventDefault();
 
 			// Get the nonce.
-			filesNonce  = $( this ).data( 'nonce' );
+			var filesNonce  = $( this ).data( 'nonce' );
 
 			// Bail real quick without a nonce.
 			if ( '' === filesNonce || undefined === filesNonce ) {
@@ -199,6 +213,15 @@ jQuery(document).ready( function($) {
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
 				// console.log( response );
+				// We got message markup, so show it.
+				if ( response.data.message !== '' ) {
+
+					// Determine the message type.
+					messageType = response.success !== true ? 'error' : 'success';
+
+					// Show our message.
+					setAccountNotification( messageType, response.data.message );
+				}
 
 				// Handle the failure.
 				if ( response.success !== true ) {
@@ -206,17 +229,76 @@ jQuery(document).ready( function($) {
 				}
 
 				// Remove our individual row.
-				if ( response.data.message !== '' ) {
-
-					// Show our message.
-					setAccountNotification( 'success', response.data.message );
-
-					// Remove the single item.
+				if ( response.data.markup !== '' ) {
 					$( filesBlock ).find( response.data.markup ).remove();
 				}
-			});
+			}, 'json' );
 		});
 
+		/**
+		 * Check for the user delete request actions.
+		 */
+		$( 'form.lw-woo-gdpr-delete-me-form' ).submit( function( event ) {
+
+			// Stop the actual click.
+			event.preventDefault();
+
+			// Fetch the nonce.
+			var deleteNonce = $( 'input#lw_woo_gdpr_delete_nonce' ).val();
+
+			// Bail real quick without a nonce.
+			if ( '' === deleteNonce || undefined === deleteNonce ) {
+				return false;
+			}
+
+			// Build the data structure for the call.
+			var data = {
+				action: 'lw_woo_request_user_deletion',
+				user_id: $( 'input#lw_woo_gdpr_data_delete_user' ).val(),
+				deletes: $( 'ul.lw-woo-gdpr-delete-options input:checked' ).map( function() { return this.value; }).get(),
+				nonce: deleteNonce
+			};
+			// console.log( data ); return;
+
+			// Send out the ajax call itself.
+			jQuery.post( ajaxurl, data, function( response ) {
+				// console.log( response );
+
+				// We got message markup, so show it.
+				if ( response.data.message !== '' ) {
+
+					// Determine the message type.
+					messageType = response.success !== true ? 'error' : 'success';
+
+					// Show our message.
+					setAccountNotification( messageType, response.data.message );
+				}
+
+				// Handle the failure.
+				if ( response.success !== true ) {
+					return false;
+				}
+
+				// We got table row markup, so show it.
+				if ( response.data.markup !== '' ) {
+
+					// Clear our checkboxes.
+					clearAllCheckboxes( 'li.lw-woo-gdpr-delete-option' );
+
+					// Clear out the existing list and add ours.
+					$( 'ul.lw-woo-gdpr-delete-options' ).empty().append( response.data.markup.requests );
+				}
+
+				// If we have a submits replace, do that.
+				if ( response.data.markup.remaining !== true ) {
+					$( 'p.lw-woo-gdpr-delete-submit' ).empty().append( '<em>' + frontLWWooGDPR.remain_text + '</em>' );
+				}
+
+			}, 'json' );
+
+		});
+
+		// End the whole 'divexists' wrapper.
 	});
 
 //********************************************************
