@@ -277,7 +277,7 @@ class LW_Woo_GDPR_SettingsTab {
 
 					// Add the button setup itself.
 					$block .= '<td class="lw-woo-gdpr-new-field lw-woo-gdpr-new-field-add-button">';
-						$block .= '<input type="submit" class="button button-secondary button-small lw-woo-gdpr-add-new" value="' . esc_html__( 'Add New Item', 'liquidweb-woocommerce-gdpr' ) . '">';
+						$block .= '<button type="submit" class="button button-secondary button-small lw-woo-gdpr-admin-button lw-woo-gdpr-add-new">' . esc_html__( 'Add New Item', 'liquidweb-woocommerce-gdpr' ) . '</button>';
 
 						// Include a nonce.
 						$block .= wp_nonce_field( 'lw_woo_gdpr_new_action', 'lw_woo_gdpr_new_nonce', true, false );

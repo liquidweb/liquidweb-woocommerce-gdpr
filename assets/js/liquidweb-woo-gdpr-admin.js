@@ -35,6 +35,7 @@ jQuery(document).ready( function($) {
 	var saveForm = 'form#mainform';
 	var sortTable = 'table.lw-woo-gdpr-saved-table-wrap';
 	var sortBody = 'table.lw-woo-gdpr-saved-table-wrap tbody';
+	var saveSubmit;
 
 	/**
 	 * Set up the sortable table rows.
@@ -59,9 +60,21 @@ jQuery(document).ready( function($) {
 	});
 
 	/**
+	 * Set the button variable to handle the two submits.
+	 */
+	$( saveForm ).on( 'click', 'button', function() {
+		saveSubmit = $( this ).hasClass( 'lw-woo-gdpr-add-new' ) ? true : false;
+	});
+
+	/**
 	 * Add a new item into the table.
 	 */
 	$( saveForm ).submit( function( event ) {
+
+		// Bail on the actual save button.
+		if ( saveSubmit !== true ) {
+			return;
+		}
 
 		// Stop the actual submit.
 		event.preventDefault();
