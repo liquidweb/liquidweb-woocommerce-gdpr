@@ -9,6 +9,15 @@ function clearNewFieldInputs() {
 }
 
 /**
+ * Reset the item count in the table.
+ */
+function resetTableCount( tableText ) {
+	jQuery( 'div.tablenav' ).each( function() {
+		jQuery( this ).find( 'span.displaying-num' ).text( tableText );
+	});
+}
+
+/**
  * Now let's get started.
  */
 jQuery(document).ready( function($) {
@@ -33,9 +42,13 @@ jQuery(document).ready( function($) {
 	 * Set some vars for later
 	 */
 	var saveForm = 'form#mainform';
+	var saveSubmit;
+
 	var sortTable = 'table.lw-woo-gdpr-saved-table-wrap';
 	var sortBody = 'table.lw-woo-gdpr-saved-table-wrap tbody';
-	var saveSubmit;
+
+	var requestForm = 'form#lw-woo-gdpr-requests-admin-form';
+	var requestTable = 'table.userdeletionrequests';
 
 	/**
 	 * Set up the sortable table rows.
@@ -99,11 +112,9 @@ jQuery(document).ready( function($) {
 			label: $( 'input#lw-woo-gdpr-new-label' ).val(),
 			nonce: newNonce
 		};
-		// console.log( data );
 
 		// Send out the ajax call itself.
 		jQuery.post( ajaxurl, data, function( response ) {
-			// console.log( response );
 
 			// Handle the failure.
 			if ( response.success !== true ) {
@@ -140,9 +151,6 @@ jQuery(document).ready( function($) {
 		var fieldID     = $( this ).data( 'field-id' );
 		var fieldNonce  = $( this ).data( 'nonce' );
 
-		// console.log( fieldID );
-		// console.log( fieldNonce );
-
 		// Bail real quick without a nonce.
 		if ( '' === fieldNonce || undefined === fieldNonce ) {
 			return false;
@@ -159,11 +167,9 @@ jQuery(document).ready( function($) {
 			field_id: fieldID,
 			nonce: fieldNonce
 		};
-		// console.log( data );
 
 		// Send out the ajax call itself.
 		jQuery.post( ajaxurl, data, function( response ) {
-			// console.log( response );
 
 			// Handle the failure.
 			if ( response.success !== true ) {
@@ -180,6 +186,70 @@ jQuery(document).ready( function($) {
 				$( sortBody ).sortable( 'refreshPositions' );
 			}
 		}, 'json' );
+	});
+
+	/**
+	 * Check for our pending requests form.
+	 */
+	$( requestForm ).divExists( function() {
+
+		// Look for a single delete.
+		$( requestTable ).on( 'click', 'a.lw-woo-action-delete', function( event ) {
+
+			// Stop the actual click.
+			event.preventDefault();
+
+			// Set my user block.
+			var userBlock   = $( this ).parents( 'tr' );
+
+			// Fetch my user ID and nonce.
+			var userID      = $( this ).data( 'user-id' );
+			var userNonce   = $( this ).data( 'nonce' );
+
+			// Bail real quick without a nonce.
+			if ( '' === userNonce || undefined === userNonce ) {
+				return false;
+			}
+
+			// Handle the missing user ID.
+			if ( '' === userID || undefined === userID ) {
+				return false; // @@todo need a better return.
+			}
+
+			// Build the data structure for the call.
+			var data = {
+				action: 'lw_woo_process_user_delete',
+				user_id: userID,
+				nonce: userNonce
+			};
+
+			// Send out the ajax call itself.
+			jQuery.post( ajaxurl, data, function( response ) {
+
+				// Handle the failure.
+				if ( response.success !== true ) {
+					return false;
+				}
+
+				// No error, so remove the row.
+				if ( response.success === true || response.success === 'true' ) {
+					$( requestTable ).find( userBlock ).fadeOut().remove();
+				}
+
+				// If we have the text, swap it.
+				if ( response.data.ctext !== '' ) {
+					resetTableCount( response.data.ctext );
+				}
+
+				// If none remain, refresh.
+				if ( response.data.remain !== true ) {
+					window.location.reload( true );
+				}
+
+			}, 'json' );
+		});
+
+		// End the whole 'divexists' wrapper.
 	});
 
 //********************************************************

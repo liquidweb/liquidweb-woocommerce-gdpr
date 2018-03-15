@@ -26,10 +26,39 @@ class LW_Woo_GDPR_Admin {
 	 * @return void
 	 */
 	public function init() {
+		add_action( 'admin_head',                           array( $this, 'load_alert_icon_css'         )           );
 		add_action( 'admin_enqueue_scripts',                array( $this, 'load_admin_assets'           ),  10      );
 		add_filter( 'plugin_action_links',                  array( $this, 'quick_link'                  ),  10, 2   );
 		add_action( 'admin_notices',                        array( $this, 'process_request_notices'     )           );
 		add_action( 'admin_menu',                           array( $this, 'load_settings_menu'          ),  99      );
+	}
+
+	/**
+	 * Load the small bit of CSS for the admin alert sidebar icon.
+	 *
+	 * @return void
+	 */
+	public function load_alert_icon_css() {
+
+		// Open the style tag.
+		echo '<style>';
+
+			// The icon all the time.
+			echo '.lw-woo-gdpr-alert-icon {';
+				echo 'font-size: 16px;';
+				echo 'height: 16px;';
+				echo 'width: 16px;';
+				echo 'margin: 1px 0 0 10px;';
+				echo 'color: #b4b9be;';
+			echo '}';
+
+			// When the icon is current.
+			echo '.current .lw-woo-gdpr-alert-icon {';
+				echo 'color: #fff;';
+			echo '}';
+
+		// Close the style tag.
+		echo '</style>';
 	}
 
 	/**
@@ -167,11 +196,14 @@ class LW_Woo_GDPR_Admin {
 	 */
 	public function load_settings_menu() {
 
+		// Check for pending requests.
+		$alert  = false !== lw_woo_gdpr_maybe_requests_exist( 'boolean' ) ? '<i class="dashicons dashicons-warning lw-woo-gdpr-alert-icon"></i>' : '';
+
 		// Add our submenu page.
 		add_submenu_page(
 			'woocommerce',
 			__( 'Pending GDPR Requests', 'liquidweb-woocommerce-gdpr' ),
-			__( 'GDPR Requests', 'liquidweb-woocommerce-gdpr' ),
+			__( 'GDPR Requests', 'liquidweb-woocommerce-gdpr' ) . $alert,
 			'manage_options',
 			self::$menu_slug,
 			array( __class__, 'settings_page_view' )
@@ -193,9 +225,6 @@ class LW_Woo_GDPR_Admin {
 
 			// Handle the title.
 			echo '<h1 class="lw-woo-gdpr-requests-admin-title">' . get_admin_page_title() . '</h1>';
-
-			// Output some context.
-			echo ! empty( $requests ) ? '<p>' . sprintf( _n( 'You currently have %d pending GDPR "Delete Me" request.', 'You currently have %d pending GDPR "Delete Me" requests.', count( $requests ), 'liquidweb-woocommerce-gdpr' ), count( $requests ) ) : '';
 
 			// Handle our table, but only if we have some.
 			echo self::pending_requests_table( $requests );

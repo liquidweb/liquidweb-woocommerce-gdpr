@@ -27,6 +27,8 @@ class LW_Woo_GDPR_Ajax {
 		add_action( 'wp_ajax_lw_woo_add_new_optin_row',     array( $this, 'add_new_optin_row'           )           );
 		add_action( 'wp_ajax_lw_woo_delete_single_row',     array( $this, 'delete_single_row'           )           );
 		add_action( 'wp_ajax_lw_woo_update_sorted_rows',    array( $this, 'update_sorted_rows'          )           );
+
+		add_action( 'wp_ajax_lw_woo_process_user_delete',   array( $this, 'process_user_delete'         )           );
 	}
 
 	/**
@@ -491,6 +493,90 @@ class LW_Woo_GDPR_Ajax {
 		$return = array(
 			'errcode' => null,
 			'message' => lw_woo_gdpr_notice_text( 'success' ),
+		);
+
+		// And handle my JSON return.
+		wp_send_json_success( $return );
+	}
+
+	/**
+	 * Handle the actual user delete process.
+	 *
+	 * @return mixed
+	 */
+	public function process_user_delete() {
+
+		// Only run this on the admin side.
+		if ( ! is_admin() ) {
+			die();
+		}
+
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_process_user_delete' !== sanitize_text_field( $_POST['action'] ) ) {
+			return false;
+		}
+
+		// Check to see if our nonce was provided.
+		if ( empty( $_POST['nonce'] ) ) {
+			self::send_error( 'missing-nonce' );
+		}
+
+		// Check to see if our user ID was provided.
+		if ( empty( $_POST['user_id'] ) ) {
+			self::send_error( 'missing-user-id' );
+		}
+
+		// Set my user ID.
+		$user_id    = absint( $_POST['user_id'] );
+
+		// Make sure it isn't the current user.
+		if ( $user_id === get_current_user_id() ) {
+			self::send_error( 'current-user' );
+		}
+
+		// Check to see if our nonce failed.
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'lw_woo_delete_single_' . $user_id ) ) {
+			self::send_error( 'bad-nonce' );
+		}
+
+		// Fetch my data types and downloads.
+		$datatypes  = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+		// Handle my datatypes if we have them.
+		if ( ! empty( $datatypes ) ) {
+
+			// Loop my types.
+			foreach ( $datatypes as $datatype ) {
+
+				// Remove any files from the meta we have for this data type.
+				lw_woo_gdpr()->remove_file_from_meta( $user_id, $datatype );
+
+				// Delete the datatype.
+				lw_woo_gdpr()->delete_userdata( $user_id, $datatype );
+			}
+		}
+
+		// Remove any data files we may have.
+		lw_woo_gdpr()->delete_user_files( $user_id );
+
+		// Remove this user from our overall data array with the count.
+		$count  = lw_woo_gdpr()->update_user_delete_requests( $user_id, null, 'remove' );
+		$remain = ! empty( $count ) && absint( $count ) > 0 ? true : false;
+
+		// Write the text for the item count.
+		$ctext  = ! empty( $count ) ? sprintf( _n( '%s item', '%s items', absint( $count ), 'liquidweb-woocommerce-gdpr' ), number_format_i18n( absint( $count ) ) ) : '';
+
+		// Build our return.
+		$return = array(
+			'errcode' => null,
+			'message' => lw_woo_gdpr_notice_text( 'success-userdelete' ),
+			'remain'  => $remain,
+			'ctext'   => $ctext
 		);
 
 		// And handle my JSON return.

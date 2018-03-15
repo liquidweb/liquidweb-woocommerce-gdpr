@@ -7,49 +7,6 @@
  * @package LiquidWeb_Woo_GDPR
  */
 
-if ( ! function_exists( 'preprint' ) ) {
-	/**
-	 * Display array results in a readable fashion.
-	 *
-	 * @param  mixed   $display  The output we want to display.
-	 * @param  boolean $die      Whether or not to die as soon as output is generated.
-	 * @param  boolean $return   Whether to return the output or show it.
-	 *
-	 * @return mixed             Our printed (or returned) output.
-	 */
-	function preprint( $display, $die = false, $return = false ) {
-
-		// Add some CSS to make it a bit more readable.
-		$style  = 'background-color: #fff; color: #000; font-size: 16px; line-height: 22px; padding: 5px; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;';
-
-		// Filter the style.
-		$style  = apply_filters( 'preprint_style', $style );
-
-		// Set up the code itself.
-		$code   = print_r( $display, 1 );
-
-		// Generate the actual output.
-		$output = wp_doing_ajax() ? $code : '<pre style="' . $style . '">' . $code . '</pre>';
-
-		// Return if requested.
-		if ( $return ) {
-			return $output;
-		}
-
-		// Print if requested (the default).
-		if ( ! $return ) {
-			print $output;
-		}
-
-		// Die if you want to die.
-		if ( $die ) {
-			die();
-		}
-	}
-
-	// End the function exists checks.
-}
-
 if ( ! function_exists( 'lw_woo_gdpr_is_dir_empty' ) ) {
 	/**
 	 * Look inside a directory and say if it has files or not.

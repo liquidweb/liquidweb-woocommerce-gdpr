@@ -774,10 +774,23 @@ final class LW_Woo_GDPR {
 
 			// And remove it to the overall data set.
 			unset( $requests[ $user_id ] );
+
+			// And set our count.
+			$count  = count( $requests );
 		}
 
 		// Make sure we don't have any remnants.
 		$requests   = array_filter( $requests );
+
+		// If we have none left, delete the option and return.
+		if ( empty( $requests ) ) {
+
+			// Delete the option.
+			delete_option( 'lw_woo_gdrp_delete_requests' );
+
+			// And return zero.
+			return 0;
+		}
 
 		// And update our data.
 		update_option( 'lw_woo_gdrp_delete_requests', $requests );

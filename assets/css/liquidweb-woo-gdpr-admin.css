@@ -7,6 +7,13 @@
   .lw-woo-gdpr-requests-admin-table .gutter-row {
     font-size: 0; }
 
+.lw-woo-admin-datatypes-list {
+  margin: 0; }
+  .lw-woo-admin-datatypes-list li {
+    color: #555;
+    margin: 0;
+    padding: 0 0 1px; }
+
 .lw-woo-gdpr-add-new-table-wrap {
   max-width: 94%;
   margin-bottom: 20px; }

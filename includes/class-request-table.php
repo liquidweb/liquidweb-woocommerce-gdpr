@@ -233,6 +233,21 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		// Build my markup display.
 		$setup  = ! empty( $types ) ? '<em>' . implode( ', ', $types ) . '</em>' : '';
 
+		/*
+		// Set an empty.
+		$setup  = '';
+
+		// Create a simple unordered list.
+		$setup .= '<ul class="lw-woo-admin-datatypes-list">';
+
+		// Loop my types and output.
+		foreach ( $types as $type ) {
+			$setup .= '<li>' . esc_html( $type ) . '</li>';
+		}
+
+		// Close the list.
+		$setup .= '</ul>';
+		*/
 		// Return my formatted data types.
 		return apply_filters( 'lw_woo_gdpr_column_datatypes', $setup, $item );
 	}
@@ -454,9 +469,9 @@ class UserDeleteRequests_Table extends WP_List_Table {
 
 		// Create the array.
 		$setup  = array(
-			'profile'   => '<a title="' . __( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $item['id'] ) . '">' . esc_html( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '</a>',
-			'email'     => '<a title="' . __( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( 'mailto:' . antispambot( $item['email_address'] ) ) . '">' . esc_html( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
-			'delete'    => '<a title="' . __( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( $delete ) . '">' . esc_html( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'profile'   => '<a class="lw-woo-action-link lw-woo-action-view" title="' . __( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $item['id'] ) . '">' . esc_html( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'email'     => '<a class="lw-woo-action-link lw-woo-action-email" title="' . __( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( 'mailto:' . antispambot( $item['email_address'] ) ) . '">' . esc_html( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'delete'    => '<a data-user-id="' . absint( $item['id'] ) . '" data-nonce="' . esc_attr( $nonce ) . '" class="lw-woo-action-link lw-woo-action-delete" title="' . __( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( $delete ) . '">' . esc_html( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
 		);
 
 		// Return our row actions.

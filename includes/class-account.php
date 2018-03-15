@@ -33,8 +33,6 @@ class LW_Woo_GDPR_Account {
 	 */
 	public function check_user_optin_changes() {
 
-		//preprint( $_POST, true );
-
 		// Make sure we have the action we want.
 		if ( empty( $_POST['action'] ) || 'lw_woo_gdpr_changeopt' !== esc_attr( $_POST['action'] ) ) {
 			return;

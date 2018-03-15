@@ -102,11 +102,10 @@ jQuery(document).ready( function($) {
 				optins: $( 'ul.lw-woo-gdpr-optin-list input:checked' ).map( function() { return this.id; }).get(),
 				nonce: optsNonce
 			};
-			// console.log( data );
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-				// console.log( response );
+
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
 
@@ -152,11 +151,9 @@ jQuery(document).ready( function($) {
 				exports: $( 'ul.lw-woo-gdpr-export-options input:checked' ).map( function() { return this.value; }).get(),
 				nonce: exportNonce
 			};
-			// console.log( data );
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-				// console.log( response );
 
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
@@ -208,11 +205,10 @@ jQuery(document).ready( function($) {
 				datatype: $( this ).data( 'type' ),
 				nonce: filesNonce
 			};
-			// console.log( data );
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-				// console.log( response );
+
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
 
@@ -258,11 +254,9 @@ jQuery(document).ready( function($) {
 				deletes: $( 'ul.lw-woo-gdpr-delete-options input:checked' ).map( function() { return this.value; }).get(),
 				nonce: deleteNonce
 			};
-			// console.log( data ); return;
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-				// console.log( response );
 
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
@@ -295,7 +289,6 @@ jQuery(document).ready( function($) {
 				}
 
 			}, 'json' );
-
 		});
 
 		// End the whole 'divexists' wrapper.

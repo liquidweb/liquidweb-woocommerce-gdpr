@@ -28,6 +28,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'Your data deletion request has been registered.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'success-userdelete' :
+			return __( 'The requested user data has been removed.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'success-delete' :
 			return __( 'The requested export file has been deleted.', 'liquidweb-woocommerce-gdpr' );
 			break;
@@ -54,7 +58,7 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			break;
 
 		case 'no_user' :
-			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
+			return __( 'No user ID was provided.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
 		case 'no_export_files' :
@@ -79,6 +83,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 
 		case 'no-users' :
 			return __( 'No users were selected.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'current-user' :
+			return __( 'The requested user cannot be the same as the one requesting it.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
 		case 'missing-nonce' :
