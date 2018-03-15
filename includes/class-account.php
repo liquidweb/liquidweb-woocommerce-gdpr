@@ -45,7 +45,7 @@ class LW_Woo_GDPR_Account {
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_POST['lw_woo_gdpr_data_changeopt_user'] ) ) {
-		//	self::redirect_export_error( 'NO_USER' );
+			self::redirect_export_error( 'NO_USER' );
 		}
 
 		// Set my user ID.
