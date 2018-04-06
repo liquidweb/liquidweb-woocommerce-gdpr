@@ -1,10 +1,10 @@
 {
   "name": "liquidweb-woocommerce-gdpr",
   "version": "0.0.1",
-  "description": "Be compliant",
+  "description": "An initial setup and allowing custom opt-in messages with related hooks, data management and export, and user deletion requests.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/norcross/liquidweb-woocommerce-gdpr.git"
+    "url": "https://github.com/liquidweb/liquidweb-woocommerce-gdpr.git"
   },
   "author": {
     "name": "Liquid Web",
