@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Liquid Web WooCommerce GDPR
  * Plugin URI:  https://github.com/liquidweb/liquidweb-woocommerce-gdpr
- * Description: An initial setup and allowing custom opt-in messages with related hooks, data management and export, and user deletion requests.
+ * Description: An initial setup for allowing custom opt-in messages with related hooks, data management and export, and user deletion requests.
  * Version:     0.0.1
  * Author:      Liquid Web
  * Author URI:  https://www.liquidweb.com
