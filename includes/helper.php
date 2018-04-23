@@ -185,6 +185,17 @@ function lw_woo_gdpr_optin_defaults() {
 }
 
 /**
+ * Parse the product name out of an item.
+ *
+ * @param  object $item  The product data from inside the order.
+ *
+ * @return string
+ */
+function lw_woo_gdpr_order_names( $product ) {
+	return esc_attr( $product->get_name() );
+}
+
+/**
  * Get the array of each kind of opt-in box we have.
  *
  * @param  boolean $keys  Whether we want array keys or all of it.
@@ -282,6 +293,8 @@ function lw_woo_gdpr_export_headers( $type = '' ) {
 			__( 'Order Date', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Order Time', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Order Total', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Order Status', 'liquidweb-woocommerce-gdpr' ),
+			__( 'Order URL', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Payment Method', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Total Items', 'liquidweb-woocommerce-gdpr' ),
 			__( 'Purchased Items', 'liquidweb-woocommerce-gdpr' ),

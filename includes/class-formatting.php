@@ -71,43 +71,26 @@ class LW_Woo_GDPR_Formatting {
 			// Fetch the items inside the order.
 			$items  = $order->get_items();
 
-			// Loop my items.
-			if ( ! empty( $items ) ) {
+			// Get my count.
+			$count  = ! empty( $items ) ? count( $items ) : 0;
 
-				// Set up our initial data set.
-				$setup  = array(
-					$order->get_order_number(),
-					date( 'Y-m-d', strtotime( $order->get_date_created() ) ),
-					date( 'H:i:s', strtotime( $order->get_date_created() ) ),
-					$order->get_total(),
-					$order->get_payment_method_title(),
-					count( $items ),
-				);
+			// Run the check for products.
+			$prods  = ! empty( $items ) ? array_map( 'lw_woo_gdpr_order_names', $items ) : __( 'No products found', 'liquidweb-woocommerce-gdpr' );
 
-				// Set an empty.
-				$prod   = array();
+			// Set the data group.
+			$setup  = array(
+				$order->get_order_number(),
+				date( 'Y-m-d', strtotime( $order->get_date_created() ) ),
+				date( 'H:i:s', strtotime( $order->get_date_created() ) ),
+				$order->get_total(),
+				$order->get_status(),
+				$order->get_view_order_url(),
+				$order->get_payment_method_title(),
+				absint( $count ),
+			);
 
-				// Loop each one and add it to the end of the array.
-				foreach ( $items as $item ) {
-					$prod[] = esc_attr( $item->get_name() );
-				}
-
-				// And merge our arrays.
-				$data[] = wp_parse_args( $prod, $setup );
-
-			} else {
-
-				// Set the data group with our text.
-				$data[] = array(
-					$order->get_order_number(),
-					date( 'Y-m-d', strtotime( $order->get_date_created() ) ),
-					date( 'H:i:s', strtotime( $order->get_date_created() ) ),
-					$order->get_total(),
-					$order->get_payment_method_title(),
-					0,
-					__( 'No products found', 'liquidweb-woocommerce-gdpr' ),
-				);
-			}
+			// Merge in the product array.
+			$data[] = wp_parse_args( $prods, $setup );
 		}
 
 		// Return my export data.

@@ -41,7 +41,8 @@ class LW_Woo_GDPR_FrontEnd {
 		wp_enqueue_script( 'liquidweb-woo-gdpr-front', LW_WOO_GDPR_ASSETS_URL . '/js/' . $file . '.js', array( 'jquery' ), $vers, true );
 		wp_localize_script( 'liquidweb-woo-gdpr-front', 'frontLWWooGDPR',
 			array(
-				'remain_text' => __( 'Your requests are pending.', 'liquidweb-woocommerce-gdpr' )
+				'remain_text' => __( 'Your requests are pending.', 'liquidweb-woocommerce-gdpr' ),
+				'ajaxurl'     => admin_url( 'admin-ajax.php' ),
 			)
 		);
 	}

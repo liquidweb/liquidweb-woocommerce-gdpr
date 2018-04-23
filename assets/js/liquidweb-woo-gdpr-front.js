@@ -71,6 +71,7 @@ jQuery(document).ready( function($) {
 	/**
 	 * Set some vars for later
 	 */
+	var ajaxurl = frontLWWooGDPR.ajaxurl;
 	var messageType;
 	var filesBlock   = 'div.lw-woo-gdpr-download-section';
 
