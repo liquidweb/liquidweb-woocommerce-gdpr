@@ -40,6 +40,11 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'The requested data export completed and is ready to download.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'success-cancel' :
+		case 'success-cancelled' :
+			return __( 'Your request has been successfully cancelled.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'success-removed' :
 			return __( 'The requested field has been removed.', 'liquidweb-woocommerce-gdpr' );
 			break;

@@ -23,6 +23,7 @@ class LW_Woo_GDPR_Ajax {
 		add_action( 'wp_ajax_lw_woo_request_user_exports',  array( $this, 'request_user_exports'        )           );
 		add_action( 'wp_ajax_lw_woo_delete_export_file',    array( $this, 'delete_export_file'          )           );
 		add_action( 'wp_ajax_lw_woo_request_user_deletion', array( $this, 'request_user_deletion'       )           );
+		add_action( 'wp_ajax_lw_woo_cancel_delete_request', array( $this, 'cancel_delete_request'       )           );
 
 		add_action( 'wp_ajax_lw_woo_add_new_optin_row',     array( $this, 'add_new_optin_row'           )           );
 		add_action( 'wp_ajax_lw_woo_delete_single_row',     array( $this, 'delete_single_row'           )           );
@@ -301,6 +302,74 @@ class LW_Woo_GDPR_Ajax {
 					'remaining' => $remain,
 				),
 				'message' => lw_woo_gdpr_notice_text( 'success-deleteme' ),
+			);
+
+			// And handle my JSON return.
+			wp_send_json_success( $return );
+		}
+
+		// Made it to the end without knowing what to do.
+		self::send_error( 'unknown' );
+	}
+
+	/**
+	 * Handle the user cancelling their request.
+	 *
+	 * @return mixed
+	 */
+	public function cancel_delete_request() {
+
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_cancel_delete_request' !== sanitize_text_field( $_POST['action'] ) ) {
+			return false;
+		}
+
+		// Check to see if our nonce was provided.
+		if ( empty( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'lw_woo_gdpr_cancel_request' ) ) {
+			self::send_error( 'invalid-nonce' );
+		}
+
+		// Check for the user ID field.
+		if ( empty( $_POST['user_id'] ) ) {
+			self::send_error( 'missing-user-id' );
+		}
+
+		// Check for the delete request types field.
+		if ( empty( $_POST['datatype'] ) ) {
+			self::send_error( 'no-datatype' );
+		}
+
+		// Set my user ID.
+		$user_id    = absint( $_POST['user_id'] );
+
+		// Clean up the requested delete types.
+		$datatype   = sanitize_text_field( $_POST['datatype'] );
+
+		// Run the data update accordingly.
+		$updates    = lw_woo_gdpr()->update_user_delete_requests( $user_id, $datatype, 'cancel' );
+
+		// And update our data accordingly.
+		if ( ! is_wp_error( $updates ) ) {
+
+			// Check for the existing delete requests.
+			$exists = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+			// Create the submits.
+			$remain = count( $exists ) >= 3 ? false : true;
+
+			// Build our return.
+			$return = array(
+				'errcode' => null,
+				'markup'  => array(
+					'requests'  => LW_Woo_GDPR_Fields::get_delete_request_list( array(), $exists, $user_id ),
+					'remaining' => $remain,
+				),
+				'message' => lw_woo_gdpr_notice_text( 'success-cancelled' ),
 			);
 
 			// And handle my JSON return.

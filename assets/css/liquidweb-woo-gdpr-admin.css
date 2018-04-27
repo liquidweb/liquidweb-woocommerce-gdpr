@@ -7,6 +7,9 @@
   .lw-woo-gdpr-requests-admin-table .gutter-row {
     font-size: 0; }
 
+.lw-woo-gdpr-request-date {
+  cursor: help; }
+
 .lw-woo-admin-datatypes-list {
   margin: 0; }
   .lw-woo-admin-datatypes-list li {
@@ -17,7 +20,8 @@
 .lw-woo-gdpr-days-remain-count {
   font-size: 16px;
   line-height: 22px;
-  color: #000; }
+  color: #000;
+  cursor: help; }
   .lw-woo-gdpr-days-remain-count abbr {
     text-decoration: none; }
   .lw-woo-gdpr-days-remain-count.lw-woo-gdpr-days-remain-expired {

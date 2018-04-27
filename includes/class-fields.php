@@ -280,7 +280,7 @@ class LW_Woo_GDPR_Fields {
 					$build .= '<i class="lw-woo-gdpr-data-option-icon dashicons dashicons-lock"></i>' . esc_html( $label );
 
 					// Our cancel request link.
-					$build .= ' <a class="lw-woo-gdpr-option-link lw-woo-gdpr-cancel-request-link" data-user-id="' . absint( $user_id ) . '" data-type="' . esc_attr( $datatype ) . '" title="' . esc_attr( $canceltext ) . '" href="' . esc_url( $cancellink ) . '">' . esc_html__( 'Cancel', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+					$build .= ' <a class="lw-woo-gdpr-option-link lw-woo-gdpr-cancel-request-link" data-user-id="' . absint( $user_id ) . '" data-type="' . esc_attr( $datatype ) . '" data-nonce="' . wp_create_nonce( 'lw_woo_gdpr_cancel_request' ) . '" title="' . esc_attr( $canceltext ) . '" href="' . esc_url( $cancellink ) . '">' . esc_html__( 'Cancel', 'liquidweb-woocommerce-gdpr' ) . '</a>';
 
 				// Check for the orders with pendings.
 				} else if ( ! empty( $pends ) && 'orders' === esc_attr( $datatype ) ) {

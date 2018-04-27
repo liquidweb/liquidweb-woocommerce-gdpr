@@ -214,7 +214,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		$show   = sprintf( _x( '%s ago', '%s = human-readable time difference', 'liquidweb-woocommerce-gdpr' ), human_time_diff( $stamp, current_time( 'timestamp', 1 ) ) );
 
 		// Wrap it in an accessible tag.
-		$setup  = '<abbr title="' . esc_attr( $local ) . '">' . esc_attr( $show ) . '</abbr>';
+		$setup  = '<span class="lw-woo-gdpr-request-date"><abbr title="' . esc_attr( $local ) . '">' . esc_attr( $show ) . '</abbr></span>';
 
 		// Return my formatted date.
 		return apply_filters( 'lw_woo_gdpr_column_request_date', $setup, $item );

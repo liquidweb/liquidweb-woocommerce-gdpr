@@ -236,7 +236,6 @@ jQuery(document).ready( function($) {
 		/**
 		 * Check for the user cancel delete request actions.
 		 */
-		/*
 		$( deleteBlock ).on( 'click', 'a.lw-woo-gdpr-cancel-request-link', function( event ) {
 
 			// Stop the actual click.
@@ -260,7 +259,7 @@ jQuery(document).ready( function($) {
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-
+console.log( response );
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
 
@@ -278,11 +277,12 @@ jQuery(document).ready( function($) {
 
 				// Remove our individual row.
 				if ( response.data.markup !== '' ) {
-					$( filesBlock ).find( response.data.markup ).remove();
+					$( 'ul.lw-woo-gdpr-delete-options' ).empty().append( response.data.markup.requests );
 				}
+
 			}, 'json' );
 		});
-		*/
+
 		/**
 		 * Check for the user delete request actions.
 		 */
