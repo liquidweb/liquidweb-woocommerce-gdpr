@@ -222,11 +222,12 @@ class LW_Woo_GDPR_Fields {
 	 *
 	 * @param  array   $datatypes  The different data types to be requested
 	 * @param  array   $requests   The requests from the user.
+	 * @param  integer $user_id    The user ID that is being viewed.
 	 * @param  boolean $echo       Whether to echo or return it.
 	 *
 	 * @return HTML
 	 */
-	public static function get_delete_request_list( $datatypes = array(), $requests = array(), $echo = false ) {
+	public static function get_delete_request_list( $datatypes = array(), $requests = array(), $user_id = 0, $echo = false ) {
 
 		// Include a check for datatypes.
 		$datatypes  = ! empty( $datatypes ) ? $datatypes : lw_woo_gdpr_export_types();
@@ -235,6 +236,12 @@ class LW_Woo_GDPR_Fields {
 		if ( empty( $datatypes ) ) {
 			return;
 		}
+
+		// Set a base link for the cancel requests.
+		$cancel = add_query_arg( array( 'user' => $user_id, '_wpnonce' => wp_create_nonce( 'lw_woo_gdpr_cancel' ) ), lw_woo_gdpr()->get_account_page_link() );
+
+		// Check for the pending orders.
+		$pends  = lw_woo_gdpr_maybe_pending_orders( $user_id );
 
 		// Set our empty.
 		$build  = '';
@@ -248,8 +255,7 @@ class LW_Woo_GDPR_Fields {
 			// Set my class.
 			$class  = 'lw-woo-gdpr-data-option lw-woo-gdpr-delete-option';
 
-			// Add a disabled flag to orders (for now).
-			//$class .= 'orders' === esc_attr( $datatype ) ? ' lw-woo-gdpr-data-option-disabled' : '';
+			// Check the pending request.
 			$class .= ! empty( $didask ) ? ' lw-woo-gdpr-data-option-pending' : '';
 
 			// Open up the list item.
@@ -264,14 +270,30 @@ class LW_Woo_GDPR_Fields {
 					// Our link title.
 					$asktitle   = sprintf( __( 'Your %s data request is pending', 'liquidweb-woocommerce-gdpr' ), esc_attr( $notplural ) );
 
+					// Our cancel request link.
+					$cancellink = add_query_arg( array( 'data-type' => $datatype, 'gdpr-action' => 'cancel' ), $cancel );
+
+					// Set our cancel request text.
+					$canceltext = sprintf( __( 'Click here to cancel the %s delete request', 'liquidweb-woocommerce-gdpr' ), esc_attr( $datatype ) );
+
 					// Our icon field.
 					$build .= '<i class="lw-woo-gdpr-data-option-icon dashicons dashicons-lock"></i>' . esc_html( $label );
+
+					// Our cancel request link.
+					$build .= ' <a class="lw-woo-gdpr-option-link lw-woo-gdpr-cancel-request-link" data-user-id="' . absint( $user_id ) . '" data-type="' . esc_attr( $datatype ) . '" title="' . esc_attr( $canceltext ) . '" href="' . esc_url( $cancellink ) . '">' . esc_html__( 'Cancel', 'liquidweb-woocommerce-gdpr' ) . '</a>';
+
+				// Check for the orders with pendings.
+				} else if ( ! empty( $pends ) && 'orders' === esc_attr( $datatype ) ) {
+
+					// The input field.
+					$build .= '<input class="lw-woo-gdpr-input-disabled" name="lw_woo_gdpr_delete_option[]" id="delete-option-orders" type="checkbox" value="' . esc_attr( $datatype ) . '" disabled="disabled">';
+
+					// The label field.
+					$build .= '<label class="lw-woo-gdpr-label-disabled" for="delete-option-' . esc_attr( $datatype ) . '">' . esc_html( $label ) . '</label>';
 
 				} else {
 
 					// The input field.
-					// $build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '" ' . disabled( $datatype, 'orders' , false ) . ' >';
-
 					$build .= '<input name="lw_woo_gdpr_delete_option[]" id="delete-option-' . esc_attr( $datatype ) . '" type="checkbox" value="' . esc_attr( $datatype ) . '">';
 
 					// The label field.

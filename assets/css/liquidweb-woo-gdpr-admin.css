@@ -14,6 +14,21 @@
     margin: 0;
     padding: 0 0 1px; }
 
+.lw-woo-gdpr-days-remain-count {
+  font-size: 16px;
+  line-height: 22px;
+  color: #000; }
+  .lw-woo-gdpr-days-remain-count abbr {
+    text-decoration: none; }
+  .lw-woo-gdpr-days-remain-count.lw-woo-gdpr-days-remain-expired {
+    font-weight: bold; }
+  .lw-woo-gdpr-days-remain-count.lw-woo-gdpr-days-remain-red {
+    color: #bc2f25; }
+  .lw-woo-gdpr-days-remain-count.lw-woo-gdpr-days-remain-orange {
+    color: #e5822b; }
+  .lw-woo-gdpr-days-remain-count.lw-woo-gdpr-days-remain-green {
+    color: #4f8a10; }
+
 .lw-woo-gdpr-add-new-table-wrap {
   max-width: 94%;
   margin-bottom: 20px; }

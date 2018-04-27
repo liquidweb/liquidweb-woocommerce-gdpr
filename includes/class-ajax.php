@@ -111,7 +111,7 @@ class LW_Woo_GDPR_Ajax {
 
 		// Check for the export types field.
 		if ( empty( $_POST['exports'] ) ) {
-			self::send_error( 'NO_OPTION' );
+			self::send_error( 'no-option' );
 		}
 
 		// Set my user ID.
@@ -200,7 +200,7 @@ class LW_Woo_GDPR_Ajax {
 
 		// Make sure we selected something to deal with.
 		if ( empty( $_POST['datatype'] ) ) {
-			self::send_error( 'NO_DATATYPE' );
+			self::send_error( 'no-datatype' );
 		}
 
 		// Set my user ID and datatype.
@@ -209,7 +209,7 @@ class LW_Woo_GDPR_Ajax {
 
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
-			self::send_error( 'INVALID_DATATYPE' );
+			self::send_error( 'invalid-datatype' );
 		}
 
 		// Get my download files.
@@ -217,12 +217,12 @@ class LW_Woo_GDPR_Ajax {
 
 		// Make sure we have any download files at all.
 		if ( empty( $downloads ) ) {
-			self::send_error( 'NO_EXPORT_FILES' );
+			self::send_error( 'no-export-files' );
 		}
 
 		// Make sure we have the specific download file.
 		if ( empty( $downloads[ $datatype ] ) ) {
-			self::send_error( 'NO_EXPORT_TYPE_FILE' );
+			self::send_error( 'no-export-type-file' );
 		}
 
 		// Set my file URL.
@@ -275,7 +275,7 @@ class LW_Woo_GDPR_Ajax {
 
 		// Check for the delete request types field.
 		if ( empty( $_POST['deletes'] ) ) {
-			self::send_error( 'NO_OPTION' );
+			self::send_error( 'no-option' );
 		}
 
 		// Set my user ID.
@@ -297,7 +297,7 @@ class LW_Woo_GDPR_Ajax {
 			$return = array(
 				'errcode' => null,
 				'markup'  => array(
-					'requests'  => LW_Woo_GDPR_Fields::get_delete_request_list( array(), $exists ),
+					'requests'  => LW_Woo_GDPR_Fields::get_delete_request_list( array(), $exists, $user_id ),
 					'remaining' => $remain,
 				),
 				'message' => lw_woo_gdpr_notice_text( 'success-deleteme' ),

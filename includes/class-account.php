@@ -45,7 +45,7 @@ class LW_Woo_GDPR_Account {
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_POST['lw_woo_gdpr_data_changeopt_user'] ) ) {
-			self::redirect_export_error( 'NO_USER' );
+			self::redirect_export_error( 'no-user' );
 		}
 
 		// Set my user ID.
@@ -404,7 +404,7 @@ class LW_Woo_GDPR_Account {
 			if ( ! empty( $files ) ) {
 
 				// Set my base URL for download links.
-				$base   = add_query_arg( array( 'user' => $user_id, '_wpnonce' => wp_create_nonce( 'lw_woo_gdpr_files' ) ), home_url( '/account/privacy-data/' ) );
+				$base   = add_query_arg( array( 'user' => $user_id, '_wpnonce' => wp_create_nonce( 'lw_woo_gdpr_files' ) ), lw_woo_gdpr()->get_account_page_link() );
 
 				// Describe what to do.
 				$build .= '<p class="lw-woo-gdpr-section-subtitle">' . esc_html__( 'Select which export file you would like to download or delete.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
@@ -485,7 +485,7 @@ class LW_Woo_GDPR_Account {
 
 				// Set a unordered list around the checkboxes.
 				$build .= '<ul class="lw-woo-gdpr-account-item-list lw-woo-gdpr-data-options lw-woo-gdpr-delete-options">';
-					$build .= LW_Woo_GDPR_Fields::get_delete_request_list( $datatypes, $requests );
+					$build .= LW_Woo_GDPR_Fields::get_delete_request_list( $datatypes, $requests, $user_id );
 				$build .= '</ul>';
 
 				// Open the paragraph for the submit button.
@@ -495,6 +495,11 @@ class LW_Woo_GDPR_Account {
 
 			// Close the form.
 			$build .= '</form>';
+
+			// Add some text for pending orders being disabled.
+			if ( false !== $pending = lw_woo_gdpr_maybe_pending_orders( $user_id ) ) {
+				$build .= '<p class="lw-woo-gdpr-section-disable-explain">' . esc_html__( 'Orders cannot be requested for deletion while there are any open or otherwise pending orders.', 'liquidweb-woocommerce-gdpr' ) . '</p>';
+			}
 
 		// Close the div.
 		$build .= '</div>';

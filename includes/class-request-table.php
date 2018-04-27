@@ -90,6 +90,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 			'email_address' => __( 'Email Address', 'liquidweb-woocommerce-gdpr' ),
 			'request_date'  => __( 'Request Date', 'liquidweb-woocommerce-gdpr' ),
 			'datatypes'     => __( 'Data Types', 'liquidweb-woocommerce-gdpr' ),
+			'days_remain'   => __( 'Days Remaining', 'liquidweb-woocommerce-gdpr' ),
 		);
 
 		// Return filtered.
@@ -121,6 +122,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 			'visible_name'  => array( 'visible_name', false ),
 			'email_address' => array( 'email_address', true ),
 			'request_date'  => array( 'request_date', true ),
+			'days_remain'   => array( 'days_remain', true ),
 		);
 
 		// Return it, filtered.
@@ -250,6 +252,43 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		*/
 		// Return my formatted data types.
 		return apply_filters( 'lw_woo_gdpr_column_datatypes', $setup, $item );
+	}
+
+	/**
+	 * The 30 day countdown.
+	 *
+	 * @param  array  $item  The item from the data array.
+	 *
+	 * @return string
+	 */
+	protected function column_days_remain( $item ) {
+
+		// Set my stamp.
+		$stamp  = absint( $item['request_date'] );
+
+		// Set my 30 day marker.
+		$daycn  = apply_filters( 'lw_woo_gdpr_days_remain', 30 );
+
+		// Figure out the end date.
+		$enddt  = abs( $daycn * 86400 ) + $stamp;
+
+		// Calculate the remainer.
+		$remain = ceil( abs( $enddt - time() ) / 86400 );
+
+		// Make sure we aren't expired.
+		$remain = absint( $remain ) <= 30 ? absint( $remain ) : 0;
+
+		// Set the title text.
+		$title  = sprintf( _n( 'You have %d day remaining.', 'You have %d days remaining.', $remain, 'liquidweb-woocommerce-gdpr' ), $remain );
+
+		// Fetch our class to wrap it in.
+		$class  = lw_woo_gdpr_remain_count_class( $remain );
+
+		// Wrap it in an accessible tag.
+		$setup  = '<span class="' . esc_attr( $class ) . '"><abbr title="' . esc_attr( $title ) . '">' . esc_attr( $remain ) . '</abbr></span>';
+
+		// Return my formatted data types.
+		return apply_filters( 'lw_woo_gdpr_column_days_remain', $setup, $item );
 	}
 
 	/**
@@ -471,7 +510,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		$setup  = array(
 			'profile'   => '<a class="lw-woo-action-link lw-woo-action-view" title="' . __( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '" href="' . get_edit_user_link( $item['id'] ) . '">' . esc_html( 'View Profile', 'liquidweb-woocommerce-gdpr' ) . '</a>',
 			'email'     => '<a class="lw-woo-action-link lw-woo-action-email" title="' . __( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( 'mailto:' . antispambot( $item['email_address'] ) ) . '">' . esc_html( 'Email User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
-			'delete'    => '<a data-user-id="' . absint( $item['id'] ) . '" data-nonce="' . esc_attr( $nonce ) . '" class="lw-woo-action-link lw-woo-action-delete" title="' . __( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( $delete ) . '">' . esc_html( 'Delete User', 'liquidweb-woocommerce-gdpr' ) . '</a>',
+			'delete'    => '<a data-user-id="' . absint( $item['id'] ) . '" data-nonce="' . esc_attr( $nonce ) . '" class="lw-woo-action-link lw-woo-action-delete" title="' . __( 'Process Request', 'liquidweb-woocommerce-gdpr' ) . '" href="' . esc_url( $delete ) . '">' . esc_html( 'Process Request', 'liquidweb-woocommerce-gdpr' ) . '</a>',
 		);
 
 		// Return our row actions.

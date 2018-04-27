@@ -53,31 +53,31 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'Your request has been completed.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'no_option' :
+		case 'no-option' :
 			return __( 'Please select a type of data you would like to export.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'no_user' :
+		case 'no-user' :
 			return __( 'No user ID was provided.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'no_export_files' :
+		case 'no-export-files' :
 			return __( 'There was no available data to be exported.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'no_export_type_file' :
+		case 'no-export-type-file' :
 			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'invalid_action_request' :
+		case 'invalid-action-request' :
 			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'no_datatype' :
+		case 'no-datatype' :
 			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
-		case 'invalid_datatype' :
+		case 'invalid-datatype' :
 			return __( 'My eventual error message.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
@@ -182,6 +182,29 @@ function lw_woo_gdpr_optin_defaults() {
 
 	// Bail if we have no fields.
 	return ! empty( $fields ) ? $fields : false;
+}
+
+/**
+ * Set a meta key for any order that was randomized.
+ *
+ * @param  integer $user_id  The ID for the user being randomized.
+ *
+ * @return string
+ */
+function lw_woo_gdpr_flag_randomized_orders( $user_id = 0 ) {
+
+	// Bail without any order IDs.
+	if ( false === $order_ids = LW_Woo_GDPR_Data::get_orders_for_user( absint( $user_id ), false ) ) {
+		return false;
+	}
+
+	// Now loop my order IDs.
+	foreach ( $order_ids as $order_id ) {
+		update_post_meta( $order_id, '_woo_gdpr_randomized_user', 1 );
+	}
+
+	// And just return.
+	return true;
 }
 
 /**
@@ -455,6 +478,47 @@ function lw_woo_gdpr_create_delete_label( $user, $request_data = array() ) {
 
 	// Return my entire thing.
 	return $label;
+}
+
+/**
+ * Run a check to see if there are any orders that aren't finished.
+ *
+ * @param  integer $user_id  The user ID we want to check orders for.
+ *
+ * @return boolean
+ */
+function lw_woo_gdpr_maybe_pending_orders( $user_id = 0 ) {
+
+	// Bail if no orders exist at all.
+	if ( false === $order_ids = LW_Woo_GDPR_Data::get_orders_for_user( absint( $user_id ), false ) ) {
+		return;
+	}
+
+	// Set our default.
+	$pendings   = false;
+
+	// Now loop, and check the status.
+	foreach ( $order_ids as $order_id ) {
+
+		// Get an instance of the WC_Order object.
+		$order  = wc_get_order( $order_id );
+
+		// Fetch the status.
+		$status = $order->get_status();
+
+		// Now check the status against what we won't allow.
+		if ( in_array( $status, array( 'pending', 'on-hold', 'processing' ) ) ) {
+
+			// Set my new pending flag.
+			$pendings   = true;
+
+			// And stop the loop.
+			break;
+		}
+	}
+
+	// And return it.
+	return $pendings;
 }
 
 /**

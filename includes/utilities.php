@@ -203,3 +203,50 @@ if ( ! function_exists( 'lw_woo_gdpr_make_action_key' ) ) {
 
 	// End the function exists checks.
 }
+
+
+if ( ! function_exists( 'lw_woo_gdpr_remain_count_class' ) ) {
+	/**
+	 * Check the amount of days remaining on a request and return the class.
+	 *
+	 * @param  integer $remain  The amount of days remaining.
+	 *
+	 * @return string
+	 */
+	function lw_woo_gdpr_remain_count_class( $remain = 0 ) {
+
+		// Set my base class.
+		$class  = 'lw-woo-gdpr-days-remain-count';
+
+		// Run a basic switch to see the amount of days remaining.
+		switch ( true ) {
+
+			// Over or expired.
+			case absint( $remain ) < 1:
+				return $class . ' lw-woo-gdpr-days-remain-red lw-woo-gdpr-days-remain-expired';
+				break;
+
+			// Almost there.
+			case absint( $remain ) < 5:
+				return $class . ' lw-woo-gdpr-days-remain-red';
+				break;
+
+			// Begin a warning class.
+			case absint( $remain ) < 15:
+				return $class . ' lw-woo-gdpr-days-remain-orange';
+				break;
+
+			// Our general OK.
+			case absint( $remain ) <= 30:
+				return $class . ' lw-woo-gdpr-days-remain-green';
+				break;
+
+			// Our default class.
+			default :
+				return $class;
+				break;
+		}
+	}
+
+	// End the function exists checks.
+}

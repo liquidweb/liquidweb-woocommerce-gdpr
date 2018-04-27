@@ -74,6 +74,7 @@ jQuery(document).ready( function($) {
 	var ajaxurl = frontLWWooGDPR.ajaxurl;
 	var messageType;
 	var filesBlock   = 'div.lw-woo-gdpr-download-section';
+	var deleteBlock  = 'div.lw-woo-gdpr-data-delete-section';
 
 	/**
 	 * Look for click actions on the opt-ins list.
@@ -232,6 +233,56 @@ jQuery(document).ready( function($) {
 			}, 'json' );
 		});
 
+		/**
+		 * Check for the user cancel delete request actions.
+		 */
+		/*
+		$( deleteBlock ).on( 'click', 'a.lw-woo-gdpr-cancel-request-link', function( event ) {
+
+			// Stop the actual click.
+			event.preventDefault();
+
+			// Get the nonce.
+			var deleteNonce  = $( this ).data( 'nonce' );
+
+			// Bail real quick without a nonce.
+			if ( '' === deleteNonce || undefined === deleteNonce ) {
+				return false;
+			}
+
+			// Build the data structure for the call.
+			var data = {
+				action: 'lw_woo_cancel_delete_request',
+				user_id: $( this ).data( 'user-id' ),
+				datatype: $( this ).data( 'type' ),
+				nonce: deleteNonce
+			};
+
+			// Send out the ajax call itself.
+			jQuery.post( ajaxurl, data, function( response ) {
+
+				// We got message markup, so show it.
+				if ( response.data.message !== '' ) {
+
+					// Determine the message type.
+					messageType = response.success !== true ? 'error' : 'success';
+
+					// Show our message.
+					setAccountNotification( messageType, response.data.message );
+				}
+
+				// Handle the failure.
+				if ( response.success !== true ) {
+					return false;
+				}
+
+				// Remove our individual row.
+				if ( response.data.markup !== '' ) {
+					$( filesBlock ).find( response.data.markup ).remove();
+				}
+			}, 'json' );
+		});
+		*/
 		/**
 		 * Check for the user delete request actions.
 		 */

@@ -18,6 +18,7 @@ class LW_Woo_GDPR_Export {
 	public function init() {
 		add_action( 'init',                                             array( $this, 'check_data_export_request'   )           );
 		add_action( 'init',                                             array( $this, 'check_data_action_request'   )           );
+		add_action( 'init',                                             array( $this, 'check_data_cancel_request'   )           );
 		add_action( 'init',                                             array( $this, 'check_data_delete_request'   )           );
 	}
 
@@ -40,12 +41,12 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we selected something to export.
 		if ( empty( $_POST['lw_woo_gdpr_export_option'] ) ) {
-			self::redirect_export_error( 'NO_OPTION' );
+			self::redirect_export_error( 'no-option' );
 		}
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_POST['lw_woo_gdpr_data_export_user'] ) ) {
-			self::redirect_export_error( 'NO_USER' );
+			self::redirect_export_error( 'no-user' );
 		}
 
 		// Set my user ID.
@@ -86,7 +87,7 @@ class LW_Woo_GDPR_Export {
 
 		// Bail if we have no exports to provide.
 		if ( empty( $filelist ) ) {
-			self::redirect_export_error( 'NO_EXPORT_FILES' );
+			self::redirect_export_error( 'no-export-files' );
 		}
 
 		// Update the user meta so we can show it.
@@ -101,7 +102,7 @@ class LW_Woo_GDPR_Export {
 	}
 
 	/**
-	 * Look for our data download function.
+	 * Look for our data download / delete functions.
 	 *
 	 * @return void
 	 */
@@ -119,7 +120,7 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure it's a valid action.
 		if ( ! in_array( esc_attr( $_GET['gdpr-action'] ), array( 'download', 'delete' ) ) ) {
-			self::redirect_export_error( 'INVALID_ACTION_REQUEST' );
+			self::redirect_export_error( 'invalid-action-request' );
 		}
 
 		// Set my action.
@@ -127,12 +128,12 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_GET['user'] ) ) {
-			self::redirect_export_error( 'NO_USER' );
+			self::redirect_export_error( 'no-user' );
 		}
 
 		// Make sure we selected something to deal with.
 		if ( empty( $_GET['data-type'] ) ) {
-			self::redirect_export_error( 'NO_DATATYPE' );
+			self::redirect_export_error( 'no-datatype' );
 		}
 
 		// Set my user ID and datatype.
@@ -141,7 +142,7 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
-			self::redirect_export_error( 'INVALID_DATATYPE' );
+			self::redirect_export_error( 'invalid-datatype' );
 		}
 
 		// Get my download files.
@@ -149,12 +150,12 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we have any download files at all.
 		if ( empty( $downloads ) ) {
-			self::redirect_export_error( 'NO_EXPORT_FILES' );
+			self::redirect_export_error( 'no-export-files' );
 		}
 
 		// Make sure we have the specific download file.
 		if ( empty( $downloads[ $datatype ] ) ) {
-			self::redirect_export_error( 'NO_EXPORT_TYPE_FILE' );
+			self::redirect_export_error( 'no-export-type-file' );
 		}
 
 		// Set my file URL.
@@ -169,6 +170,71 @@ class LW_Woo_GDPR_Export {
 		if ( 'delete' === $action ) {
 			lw_woo_gdpr()->delete_file( $file_url, $user_id, $datatype, $downloads );
 		}
+	}
+
+	/**
+	 * Look for our data delete cancel function.
+	 *
+	 * @return void
+	 */
+	public function check_data_cancel_request() {
+
+		// Make sure we have an action.
+		if ( empty( $_GET['gdpr-action'] ) ) {
+			return;
+		}
+
+		// The nonce check. ALWAYS A NONCE CHECK.
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'lw_woo_gdpr_cancel' ) ) {
+			return;
+		}
+
+		// Make sure it's a valid action.
+		if ( 'cancel' !== esc_attr( $_GET['gdpr-action'] ) ) {
+			self::redirect_export_error( 'invalid-action-request' );
+		}
+
+		// Make sure we have a user of some kind.
+		if ( empty( $_GET['user'] ) ) {
+			self::redirect_export_error( 'no-user' );
+		}
+
+		// Make sure we selected something to deal with.
+		if ( empty( $_GET['data-type'] ) ) {
+			self::redirect_export_error( 'no-datatype' );
+		}
+
+		// Set my user ID and datatype.
+		$user_id    = absint( $_GET['user'] );
+		$datatype   = esc_attr( $_GET['data-type'] );
+
+		// Make sure we selected something to export.
+		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
+			self::redirect_export_error( 'invalid-datatype' );
+		}
+
+		// Get my delete request.
+		$existing   = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
+		// Make sure we have any requets files at all.
+		if ( empty( $existing ) ) {
+			self::redirect_export_error( 'no-existing-requests' );
+		}
+
+		// Make sure we have the specific request.
+		if ( ! in_array( $datatype, $existing ) ) {
+			self::redirect_export_error( 'no-request-type' );
+		}
+
+		// Handle removing the request.
+		lw_woo_gdpr()->update_user_delete_requests( $user_id, $datatype, 'cancel' );
+
+		// Now set my redirect link.
+		$link   = lw_woo_gdpr()->get_account_page_link( array( 'gdpr-result' => 1, 'success' => 1, 'action' => 'cancel' ) );
+
+		// Do the redirect.
+		wp_redirect( $link );
+		exit;
 	}
 
 	/**
@@ -190,12 +256,12 @@ class LW_Woo_GDPR_Export {
 
 		// Make sure we selected something to delete.
 		if ( empty( $_POST['lw_woo_gdpr_delete_option'] ) ) {
-			self::redirect_export_error( 'NO_OPTION' );
+			self::redirect_export_error( 'no-option' );
 		}
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_POST['lw_woo_gdpr_data_delete_user'] ) ) {
-			self::redirect_export_error( 'NO_USER' );
+			self::redirect_export_error( 'no-user' );
 		}
 
 		// Set my user ID.
@@ -231,7 +297,7 @@ class LW_Woo_GDPR_Export {
 
 		// And call my file generator.
 		if ( false === $export = self::generate_export_file( $orders, 'orders', $user_id ) ) {
-			self::redirect_export_error( 'NO_EXPORT_FILE' );
+			self::redirect_export_error( 'no-export-files' );
 		}
 
 		// Return the export.
@@ -254,7 +320,7 @@ class LW_Woo_GDPR_Export {
 
 		// And call my file generator.
 		if ( false === $export = self::generate_export_file( $comments, 'comments', $user_id ) ) {
-			self::redirect_export_error( 'NO_EXPORT_FILE' );
+			self::redirect_export_error( 'no-export-files' );
 		}
 
 		// Return the export.
@@ -277,7 +343,7 @@ class LW_Woo_GDPR_Export {
 
 		// And call my file generator.
 		if ( false === $export = self::generate_export_file( $reviews, 'reviews', $user_id ) ) {
-			self::redirect_export_error( 'NO_EXPORT_FILE' );
+			self::redirect_export_error( 'no-export-files' );
 		}
 
 		// Return the export.

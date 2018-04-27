@@ -729,7 +729,7 @@ final class LW_Woo_GDPR {
 	public function update_user_delete_requests( $user_id = 0, $datatypes = array(), $action = 'add' ) {
 
 		// Make sure we have everything required.
-		if ( empty( $user_id ) || empty( $action ) || ! in_array( esc_attr( $action ), array( 'add', 'remove' ) ) ) {
+		if ( empty( $user_id ) || empty( $action ) || ! in_array( esc_attr( $action ), array( 'add', 'remove', 'cancel' ) ) ) {
 			return false;
 		}
 
@@ -744,11 +744,11 @@ final class LW_Woo_GDPR {
 		// Get any existing requests.
 		$requests   = get_option( 'lw_woo_gdrp_delete_requests', array() );
 
+		// Check for the existing delete requests from the user.
+		$current    = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
+
 		// Manage adding one.
 		if ( 'add' === esc_attr( $action ) ) {
-
-			// Check for the existing delete requests.
-			$current    = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
 
 			// Merge any existing data requests.
 			$datatypes  = ! empty( $current ) ? wp_parse_args( $datatypes, (array) $current ) : $datatypes;
@@ -774,6 +774,45 @@ final class LW_Woo_GDPR {
 
 			// And remove it to the overall data set.
 			unset( $requests[ $user_id ] );
+
+			// And set our count.
+			$count  = count( $requests );
+		}
+
+		// Managing a cancel request.
+		if ( 'cancel' === esc_attr( $action ) ) {
+
+			// Set my data type to a string since this is a single action.
+			$single_type    = is_array( $datatypes ) ? $datatypes[0] : $datatypes;
+
+			// Unset the datatype from the existing requests.
+			if ( ! empty( $current ) && ( $key = array_search( $single_type, $current ) ) !== false ) {
+				unset( $current[ $key ] );
+			}
+
+			// If the remaining array is empty, handle the various meta.
+			if ( empty( $current ) ) {
+
+				// Delete the user meta item.
+				delete_user_meta( $user_id, 'woo_gdpr_deleteme_request' );
+
+				// Remove the user's requests from the large data set.
+				unset( $requests[ $user_id ] );
+
+			} else {
+
+				// Update the user meta so we can track it it.
+				update_user_meta( $user_id, 'woo_gdpr_deleteme_request', (array) $current );
+
+				// Get my single request.
+				$single_request = $requests[ $user_id ];
+
+				// Rebuild the array so we don't change the timestamp.
+				$request_array  = wp_parse_args( array( 'datatypes' => $current ), $single_request );
+
+				// And change the user's entry.
+				$requests[ $user_id ] = $request_array;
+			}
 
 			// And set our count.
 			$count  = count( $requests );
@@ -863,7 +902,7 @@ final class LW_Woo_GDPR {
 		// And my setup.
 		$setup  = array(
 			'ID'            => absint( $user_id ),
-			'user_login'    => $data['login'], // this doesn't update, but we are keeping it in case.
+			'user_login'    => $data['login'], // Without this field, it doesn't work ¯\_(ツ)_/¯ .
 			'user_nicename' => $data['login'],
 			'nickname'      => $data['login'],
 			'display_name'  => $data['first'] . ' ' . $data['last'],
@@ -889,6 +928,9 @@ final class LW_Woo_GDPR {
 		if ( empty( $update ) || is_wp_error( $update ) ) {
 			return false;
 		}
+
+		// Flag our orders, since it was successful.
+		lw_woo_gdpr_flag_randomized_orders( $user_id );
 
 		// Call the global.
 		global $wpdb;

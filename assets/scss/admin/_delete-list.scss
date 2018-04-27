@@ -26,6 +26,24 @@
 	}
 }
 
+.lw-woo-gdpr-days-remain-count {
+
+	font-size: 16px;
+	line-height: 22px;
+	color: #000;
+
+	abbr {
+		text-decoration: none;
+	}
+
+	&.lw-woo-gdpr-days-remain-expired { font-weight: bold; }
+	&.lw-woo-gdpr-days-remain-red { color: #bc2f25; }
+	&.lw-woo-gdpr-days-remain-orange { color: #e5822b; }
+	&.lw-woo-gdpr-days-remain-green { color: #4f8a10; }
+
+
+}
+
 @media only screen and (max-width: 782px) {
 
 }
