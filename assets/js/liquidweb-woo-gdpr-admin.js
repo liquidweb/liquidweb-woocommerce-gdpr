@@ -18,6 +18,24 @@ function resetTableCount( tableText ) {
 }
 
 /**
+ * Set our account page notification.
+ */
+function setAdminNotification( noticeText ) {
+
+	// Set an empty var.
+	var msgMarkup = '';
+
+	// Build my new list item.
+	msgMarkup += '<div id="message" class="updated settings-error notice is-dismissible lw-woo-request-notice">';
+		msgMarkup += '<p>' + noticeText + '</p>';
+ 		msgMarkup += '<button type="button" class="notice-dismiss"><span class="screen-reader-text">' + adminLWWooGDPR.dismiss_text + '</span></button>';
+	msgMarkup += '</div>';
+
+	// Add the message.
+	jQuery( '.lw-woo-gdpr-requests-admin-wrap h1:first' ).after( msgMarkup );
+}
+
+/**
  * Now let's get started.
  */
 jQuery(document).ready( function($) {
@@ -236,6 +254,11 @@ jQuery(document).ready( function($) {
 					$( requestTable ).find( userBlock ).fadeOut().remove();
 				}
 
+				// If we have the message text, show it.
+				if ( response.data.message !== '' ) {
+					setAdminNotification( response.data.message );
+				}
+
 				// If we have the text, swap it.
 				if ( response.data.ctext !== '' ) {
 					resetTableCount( response.data.ctext );
@@ -250,6 +273,13 @@ jQuery(document).ready( function($) {
 		});
 
 		// End the whole 'divexists' wrapper.
+	});
+
+	/**
+	 * Handle the notice dismissal.
+	 */
+	$( '.lw-woo-gdpr-requests-admin-wrap' ).on( 'click', '.notice-dismiss', function() {
+		$( '.lw-woo-gdpr-requests-admin-wrap' ).find( '.lw-woo-request-notice' ).remove();
 	});
 
 //********************************************************

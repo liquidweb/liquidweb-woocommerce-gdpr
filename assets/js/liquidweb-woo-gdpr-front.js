@@ -259,7 +259,7 @@ jQuery(document).ready( function($) {
 
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
-console.log( response );
+
 				// We got message markup, so show it.
 				if ( response.data.message !== '' ) {
 

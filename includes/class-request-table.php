@@ -235,21 +235,6 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		// Build my markup display.
 		$setup  = ! empty( $types ) ? '<em>' . implode( ', ', $types ) . '</em>' : '';
 
-		/*
-		// Set an empty.
-		$setup  = '';
-
-		// Create a simple unordered list.
-		$setup .= '<ul class="lw-woo-admin-datatypes-list">';
-
-		// Loop my types and output.
-		foreach ( $types as $type ) {
-			$setup .= '<li>' . esc_html( $type ) . '</li>';
-		}
-
-		// Close the list.
-		$setup .= '</ul>';
-		*/
 		// Return my formatted data types.
 		return apply_filters( 'lw_woo_gdpr_column_datatypes', $setup, $item );
 	}

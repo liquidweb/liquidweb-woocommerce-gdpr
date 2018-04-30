@@ -91,6 +91,11 @@ class LW_Woo_GDPR_Admin {
 
 		// And our JS.
 		wp_enqueue_script( 'liquidweb-woo-gdpr-admin', LW_WOO_GDPR_ASSETS_URL . '/js/' . $file . '.js', array( 'jquery' ), $vers, true );
+		wp_localize_script( 'liquidweb-woo-gdpr-admin', 'adminLWWooGDPR',
+			array(
+				'dismiss_text' => __( 'Dismiss this notice.', 'liquidweb-woocommerce-gdpr' ),
+			)
+		);
 	}
 
 	/**
