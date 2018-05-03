@@ -98,6 +98,20 @@ class UserDeleteRequests_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Display all the things.
+	 *
+	 * @return HTML
+	 */
+	public function display() {
+
+		// Add a nonce for the bulk action.
+		wp_nonce_field( 'lw_woo_gdpr_bulk_delete_action', 'lw_woo_gdpr_bulk_delete_nonce' );
+
+		// And the parent display (which is most of it).
+		parent::display();
+	}
+
+	/**
 	 * Return null for our table, since no row actions exist.
 	 *
 	 * @param  object $item         The item being acted upon.
@@ -156,7 +170,7 @@ class UserDeleteRequests_Table extends WP_List_Table {
 		$id = absint( $item['id'] );
 
 		// Return my checkbox.
-		return '<input type="checkbox" name="lw_woo_gdpr_users[]" id="cb-' . $id . '" value="' . $id . '" /><label for="cb-' . $id . '" class="screen-reader-text">' . __( 'Select user', 'liquidweb-woocommerce-gdpr' ) . '</label>';
+		return '<input type="checkbox" name="lw_woo_gdpr_users[]" class="lw-woo-user-checkbox" id="cb-' . $id . '" value="' . $id . '" /><label for="cb-' . $id . '" class="screen-reader-text">' . __( 'Select user', 'liquidweb-woocommerce-gdpr' ) . '</label>';
 	}
 
 	/**

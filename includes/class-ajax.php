@@ -30,6 +30,7 @@ class LW_Woo_GDPR_Ajax {
 		add_action( 'wp_ajax_lw_woo_update_sorted_rows',    array( $this, 'update_sorted_rows'          )           );
 
 		add_action( 'wp_ajax_lw_woo_process_user_delete',   array( $this, 'process_user_delete'         )           );
+		add_action( 'wp_ajax_lw_woo_process_bulk_delete',   array( $this, 'process_bulk_delete'         )           );
 	}
 
 	/**
@@ -613,6 +614,118 @@ class LW_Woo_GDPR_Ajax {
 			self::send_error( 'bad-nonce' );
 		}
 
+		// Run the update procedure.
+		self::process_single_user_request( $user_id );
+
+		// Get any existing requests.
+		$leftov = get_option( 'lw_woo_gdrp_delete_requests', array() );
+
+		// Now count how many requests remain.
+		$count  = count( $leftov );
+		$remain = ! empty( $count ) && absint( $count ) > 0 ? true : false;
+
+		// Write the text for the item count.
+		$ctext  = ! empty( $count ) ? sprintf( _n( '%s item', '%s items', absint( $count ), 'liquidweb-woocommerce-gdpr' ), number_format_i18n( absint( $count ) ) ) : '';
+
+		// Build our return.
+		$return = array(
+			'errcode' => null,
+			'message' => lw_woo_gdpr_notice_text( 'success-userdelete' ),
+			'remain'  => $remain,
+			'ctext'   => $ctext
+		);
+
+		// And handle my JSON return.
+		wp_send_json_success( $return );
+	}
+
+	/**
+	 * Handle the bulk user delete process.
+	 *
+	 * @return mixed
+	 */
+	public function process_bulk_delete() {
+
+		// Only run this on the admin side.
+		if ( ! is_admin() ) {
+			die();
+		}
+
+		// Check our various constants.
+		if ( false === $constants = self::check_ajax_constants() ) {
+			return;
+		}
+
+		// Check for the specific action.
+		if ( empty( $_POST['action'] ) || 'lw_woo_process_bulk_delete' !== sanitize_text_field( $_POST['action'] ) ) {
+			return false;
+		}
+
+		// Check to see if our nonce was provided.
+		if ( empty( $_POST['nonce'] ) ) {
+			self::send_error( 'missing-nonce' );
+		}
+
+		// Check to see if our user IDs were provided.
+		if ( empty( $_POST['user_ids'] ) ) {
+			self::send_error( 'missing-user-ids' );
+		}
+
+		// Check to see if our nonce failed.
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'lw_woo_gdpr_bulk_delete_action' ) ) {
+			self::send_error( 'bad-nonce' );
+		}
+
+		// Sanitize my user IDs and filter dupes.
+		$user_ids   = array_map( 'absint', (array) $_POST['user_ids'] );
+		$user_ids   = array_unique( $user_ids );
+
+		// Double check we have user IDs.
+		if ( empty( $user_ids ) || ! is_array( $user_ids ) ) {
+			self::send_error( 'invalid-user-ids' );
+		}
+
+		// Now loop all the users and run the process.
+		foreach ( $user_ids as $user_id ) {
+			self::process_single_user_request( $user_id );
+		}
+
+		// Get any existing requests.
+		$leftov = get_option( 'lw_woo_gdrp_delete_requests', array() );
+
+		// Now count how many requests remain.
+		$count  = count( $leftov );
+		$remain = ! empty( $count ) && absint( $count ) > 0 ? true : false;
+
+		// Write the text for the item count.
+		$ctext  = ! empty( $count ) ? sprintf( _n( '%s item', '%s items', absint( $count ), 'liquidweb-woocommerce-gdpr' ), number_format_i18n( absint( $count ) ) ) : '';
+
+		// Build our return.
+		$return = array(
+			'errcode' => null,
+			'message' => lw_woo_gdpr_notice_text( 'success-bulkdelete' ),
+			'remain'  => $remain,
+			'ctext'   => $ctext
+		);
+
+		// And handle my JSON return.
+		wp_send_json_success( $return );
+	}
+
+	/**
+	 * Run the update procedure on a single user ID.
+	 *
+	 * @param  integer $user_id  The user ID we are doing the things to.
+	 *
+	 * @return boolean
+	 */
+	public static function process_single_user_request( $user_id = 0 ) {
+
+		// Bail with no user ID.
+		if ( empty( $user_id ) ) {
+			return false;
+		}
+
 		// Fetch my data types and downloads.
 		$datatypes  = get_user_meta( $user_id, 'woo_gdpr_deleteme_request', true );
 
@@ -634,22 +747,10 @@ class LW_Woo_GDPR_Ajax {
 		lw_woo_gdpr()->delete_user_files( $user_id );
 
 		// Remove this user from our overall data array with the count.
-		$count  = lw_woo_gdpr()->update_user_delete_requests( $user_id, null, 'remove' );
-		$remain = ! empty( $count ) && absint( $count ) > 0 ? true : false;
+		lw_woo_gdpr()->update_user_delete_requests( $user_id, null, 'remove' );
 
-		// Write the text for the item count.
-		$ctext  = ! empty( $count ) ? sprintf( _n( '%s item', '%s items', absint( $count ), 'liquidweb-woocommerce-gdpr' ), number_format_i18n( absint( $count ) ) ) : '';
-
-		// Build our return.
-		$return = array(
-			'errcode' => null,
-			'message' => lw_woo_gdpr_notice_text( 'success-userdelete' ),
-			'remain'  => $remain,
-			'ctext'   => $ctext
-		);
-
-		// And handle my JSON return.
-		wp_send_json_success( $return );
+		// And just return true.
+		return true;
 	}
 
 	/**

@@ -32,6 +32,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'The requested user data has been removed.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'success-bulkdelete' :
+			return __( 'The requested users data have been removed.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'success-delete' :
 			return __( 'The requested export file has been deleted.', 'liquidweb-woocommerce-gdpr' );
 			break;
@@ -116,6 +120,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 
 		case 'missing-user-id' :
 			return __( 'The user ID could not be determined.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
+		case 'invalid-user-ids' :
+			return __( 'The provided user IDs were not valid.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
 		case 'bad-field-id' :

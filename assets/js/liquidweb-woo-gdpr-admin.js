@@ -20,19 +20,43 @@ function resetTableCount( tableText ) {
 /**
  * Set our account page notification.
  */
-function setAdminNotification( noticeText ) {
+function setAdminNotification( noticeText, noticeType, noticeWrap ) {
+
+	// Set my notice type.
+	noticeType = noticeType || 'updated';
+
+	// Set the div wrapper we want to add the notice to.
+	noticeWrap = noticeWrap || '.lw-woo-gdpr-requests-admin-wrap';
 
 	// Set an empty var.
 	var msgMarkup = '';
 
 	// Build my new list item.
-	msgMarkup += '<div id="message" class="updated settings-error notice is-dismissible lw-woo-request-notice">';
+	msgMarkup += '<div id="message" class="' + noticeType + ' settings-error notice is-dismissible lw-woo-request-notice">';
 		msgMarkup += '<p>' + noticeText + '</p>';
  		msgMarkup += '<button type="button" class="notice-dismiss"><span class="screen-reader-text">' + adminLWWooGDPR.dismiss_text + '</span></button>';
 	msgMarkup += '</div>';
 
 	// Add the message.
-	jQuery( '.lw-woo-gdpr-requests-admin-wrap h1:first' ).after( msgMarkup );
+	jQuery( noticeWrap + ' h1:first' ).after( msgMarkup );
+}
+
+/**
+ * Clear out user rows and checkboxes from bulk actions.
+ */
+function clearBulkChecks() {
+
+	// Map out all the checked items and clear them out.
+	jQuery( 'input.lw-woo-user-checkbox:checked' ).map( function() {
+		jQuery( this ).parents( 'tr' ).fadeOut().remove();
+	});
+
+	// And uncheck the header and footer buttons.
+	jQuery( 'table.userdeletionrequests td.check-column' ).find( 'input[type=checkbox]' ).prop( 'checked', false );
+
+	// And clear the two select dropdowns.
+	jQuery( '#bulk-action-selector-top' ).val( '-1' );
+	jQuery( '#bulk-action-selector-bottom' ).val( '-1' );
 }
 
 /**
@@ -67,6 +91,11 @@ jQuery(document).ready( function($) {
 
 	var requestForm = 'form#lw-woo-gdpr-requests-admin-form';
 	var requestTable = 'table.userdeletionrequests';
+
+	var bulkChoice = '';
+	var bulkUsers = [];
+
+	var noticeType = '';
 
 	/**
 	 * Set up the sortable table rows.
@@ -244,6 +273,7 @@ jQuery(document).ready( function($) {
 			// Send out the ajax call itself.
 			jQuery.post( ajaxurl, data, function( response ) {
 
+
 				// Handle the failure.
 				if ( response.success !== true ) {
 					return false;
@@ -273,6 +303,86 @@ jQuery(document).ready( function($) {
 		});
 
 		// End the whole 'divexists' wrapper.
+	});
+
+	/**
+	 * Look for a bulk action.
+	 */
+	$( 'div.bulkactions' ).on( 'click', 'input.action', function( event ) {
+
+		// Stop the actual click.
+		event.preventDefault();
+
+		// Grab my top and bottom values.
+		var selectTop = $( '#bulk-action-selector-top' ).val();
+		var selectBot = $( '#bulk-action-selector-bottom' ).val();
+
+		// If both are empty, bail.
+		if ( selectTop === '-1' && selectBot === '-1' ) {
+			return;
+		}
+
+		// Check for which one has an option.
+		bulkChoice = selectTop !== '-1' ? selectTop : selectBot;
+
+		// First check for the nonce.
+		var bulkNonce = $( '#lw_woo_gdpr_bulk_delete_nonce' ).val();
+
+		// Bail real quick without a nonce.
+		if ( '' === bulkNonce || undefined === bulkNonce ) {
+			return false;
+		}
+
+		// Grab all my users.
+		bulkUsers  = $( 'input.lw-woo-user-checkbox:checked' ).map( function() {
+			return $( this ).val();
+		}).get();
+
+		// Check for an empty array of users.
+		if ( jQuery.isEmptyObject( bulkUsers ) ) {
+			return;
+		}
+
+		// Build the data structure for the call.
+		var data = {
+			action: 'lw_woo_process_bulk_delete',
+			user_ids: bulkUsers,
+			nonce: bulkNonce
+		};
+
+		// Send out the ajax call itself.
+		jQuery.post( ajaxurl, data, function( response ) {
+
+			// Set my type class for the notice.
+			noticeType  = response.success !== true ? 'error' : 'updated';
+
+			// If we have the message text, show it.
+			if ( response.data.message !== '' ) {
+				setAdminNotification( response.data.message, noticeType );
+			}
+
+			// Handle the failure.
+			if ( response.success !== true ) {
+				return false;
+			}
+
+			// No error, so remove the row.
+			if ( response.success === true || response.success === 'true' ) {
+				clearBulkChecks();
+			}
+
+			// If we have the text, swap it.
+			if ( response.data.ctext !== '' ) {
+				resetTableCount( response.data.ctext );
+			}
+
+			// If none remain, refresh.
+			if ( response.data.remain !== true ) {
+				window.location.reload( true );
+			}
+
+		}, 'json' );
+
 	});
 
 	/**
