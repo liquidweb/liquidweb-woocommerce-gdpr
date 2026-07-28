@@ -98,6 +98,10 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 			return __( 'The requested user cannot be the same as the one requesting it.', 'liquidweb-woocommerce-gdpr' );
 			break;
 
+		case 'permission-denied' :
+			return __( 'You do not have permission to perform this action for the requested user.', 'liquidweb-woocommerce-gdpr' );
+			break;
+
 		case 'missing-nonce' :
 			return __( 'The required nonce was missing.', 'liquidweb-woocommerce-gdpr' );
 			break;
@@ -140,6 +144,32 @@ function lw_woo_gdpr_notice_text( $code = '' ) {
 
 		// End all case breaks.
 	}
+}
+
+if ( ! function_exists( 'lw_woo_gdpr_user_request_permitted' ) ) {
+	/**
+	 * Confirm the current user is allowed to act on behalf of the requested user ID.
+	 *
+	 * @param  integer $user_id  The user ID being acted on.
+	 *
+	 * @return boolean
+	 */
+	function lw_woo_gdpr_user_request_permitted( $user_id = 0 ) {
+
+		// Bail without a user ID, or if nobody is logged in.
+		if ( empty( $user_id ) || ! is_user_logged_in() ) {
+			return false;
+		}
+
+		// Allow the request if the current user is acting on their own data.
+		if ( absint( $user_id ) === get_current_user_id() ) {
+			return true;
+		}
+
+		// Otherwise only allow those who can manage WooCommerce to act for someone else.
+		return current_user_can( 'manage_woocommerce' );
+	}
+	// End the function exists checks.
 }
 
 /**

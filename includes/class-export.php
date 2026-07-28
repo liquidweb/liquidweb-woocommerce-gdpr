@@ -52,6 +52,11 @@ class LW_Woo_GDPR_Export {
 		// Set my user ID.
 		$user_id    = absint( $_POST['lw_woo_gdpr_data_export_user'] );
 
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::redirect_export_error( 'permission-denied' );
+		}
+
 		// Fetch any existing download files.
 		$existing   = get_user_meta( $user_id, 'woo_gdpr_export_files', true );
 		$downloads  = ! empty( $existing ) ? $existing : array();
@@ -140,6 +145,11 @@ class LW_Woo_GDPR_Export {
 		$user_id    = absint( $_GET['user'] );
 		$datatype   = esc_attr( $_GET['data-type'] );
 
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::redirect_export_error( 'permission-denied' );
+		}
+
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
 			self::redirect_export_error( 'invalid-datatype' );
@@ -208,6 +218,11 @@ class LW_Woo_GDPR_Export {
 		$user_id    = absint( $_GET['user'] );
 		$datatype   = esc_attr( $_GET['data-type'] );
 
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::redirect_export_error( 'permission-denied' );
+		}
+
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
 			self::redirect_export_error( 'invalid-datatype' );
@@ -266,6 +281,11 @@ class LW_Woo_GDPR_Export {
 
 		// Set my user ID.
 		$user_id    = absint( $_POST['lw_woo_gdpr_data_delete_user'] );
+
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::redirect_export_error( 'permission-denied' );
+		}
 
 		// Sanitize all the types we requested.
 		$datatypes  = array_map( 'sanitize_text_field', $_POST['lw_woo_gdpr_delete_option'] );

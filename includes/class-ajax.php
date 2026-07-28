@@ -60,11 +60,19 @@ class LW_Woo_GDPR_Ajax {
 			self::send_error( 'missing-user-id' );
 		}
 
+		// Set my user ID.
+		$user_id    = absint( $_POST['user_id'] );
+
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::send_error( 'permission-denied' );
+		}
+
 		// Determine if we have opt-in choices.
 		$items  = ! empty( $_POST['optins'] ) ? array_filter( (array) $_POST['optins'], 'sanitize_text_field' ) : array();
 
 		// Run through the update.
-		if ( false !== $update = lw_woo_gdpr()->update_user_optin_fields( absint( $_POST['user_id'] ), null, $items, false ) ) {
+		if ( false !== $update = lw_woo_gdpr()->update_user_optin_fields( $user_id, null, $items, false ) ) {
 
 			// Grab our fields.
 			$fields = lw_woo_gdpr_optin_fields();
@@ -72,7 +80,7 @@ class LW_Woo_GDPR_Ajax {
 			// Build our return.
 			$return = array(
 				'errcode' => null,
-				'markup'  => LW_Woo_GDPR_Fields::get_optin_status_list( $fields, absint( $_POST['user_id'] ) ),
+				'markup'  => LW_Woo_GDPR_Fields::get_optin_status_list( $fields, $user_id ),
 				'message' => lw_woo_gdpr_notice_text( 'success-changeopts' ),
 			);
 
@@ -118,6 +126,11 @@ class LW_Woo_GDPR_Ajax {
 
 		// Set my user ID.
 		$user_id    = absint( $_POST['user_id'] );
+
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::send_error( 'permission-denied' );
+		}
 
 		// Clean up the requested export types.
 		$datatypes  = array_filter( (array) $_POST['exports'], 'sanitize_text_field' );
@@ -209,6 +222,11 @@ class LW_Woo_GDPR_Ajax {
 		$user_id    = absint( $_POST['user_id'] );
 		$datatype   = esc_attr( $_POST['datatype'] );
 
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::send_error( 'permission-denied' );
+		}
+
 		// Make sure we selected something to export.
 		if ( ! in_array( $datatype, array( 'orders', 'comments', 'reviews' ) ) ) {
 			self::send_error( 'invalid-datatype' );
@@ -283,6 +301,11 @@ class LW_Woo_GDPR_Ajax {
 		// Set my user ID.
 		$user_id    = absint( $_POST['user_id'] );
 
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::send_error( 'permission-denied' );
+		}
+
 		// Clean up the requested delete types.
 		$datatypes  = array_filter( (array) $_POST['deletes'], 'sanitize_text_field' );
 
@@ -347,6 +370,11 @@ class LW_Woo_GDPR_Ajax {
 
 		// Set my user ID.
 		$user_id    = absint( $_POST['user_id'] );
+
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			self::send_error( 'permission-denied' );
+		}
 
 		// Clean up the requested delete types.
 		$datatype   = sanitize_text_field( $_POST['datatype'] );

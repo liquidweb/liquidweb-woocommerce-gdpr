@@ -45,11 +45,16 @@ class LW_Woo_GDPR_Account {
 
 		// Make sure we have a user of some kind.
 		if ( empty( $_POST['lw_woo_gdpr_data_changeopt_user'] ) ) {
-			self::redirect_export_error( 'no-user' );
+			LW_Woo_GDPR_Export::redirect_export_error( 'no-user' );
 		}
 
 		// Set my user ID.
 		$user_id    = absint( $_POST['lw_woo_gdpr_data_changeopt_user'] );
+
+		// Make sure the current user is allowed to act on this user ID.
+		if ( ! lw_woo_gdpr_user_request_permitted( $user_id ) ) {
+			LW_Woo_GDPR_Export::redirect_export_error( 'permission-denied' );
+		}
 
 		// Filter my field args getting passed.
 		$field_args = empty( $_POST['lw_woo_gdpr_changeopt_items'] ) ? array() : array_filter( $_POST['lw_woo_gdpr_changeopt_items'], 'sanitize_text_field' );
